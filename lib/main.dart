@@ -11,6 +11,9 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       title: 'My App',
       home: LoginPage(),
+      theme: ThemeData(
+        colorScheme: ColorScheme.fromSwatch(primarySwatch: Colors.indigo),
+      ),
     );
   }
 }
