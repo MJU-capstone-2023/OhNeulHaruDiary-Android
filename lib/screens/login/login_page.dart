@@ -15,6 +15,7 @@ class _LoginPageState extends State<LoginPage> {
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
   bool _isLoginButtonEnabled = false;
+  bool _obscurePassword = true;
 
   @override
   void initState() {
@@ -56,7 +57,6 @@ class _LoginPageState extends State<LoginPage> {
     } else {
       // 로그인 실패
       Fluttertoast.showToast(msg: "로그인에 실패했습니다. 이메일 혹은 비밀번호를 다시 확인해주세요.");
-      throw Exception('email=$email, password=$password');
     }
   }
 
@@ -66,14 +66,27 @@ class _LoginPageState extends State<LoginPage> {
       resizeToAvoidBottomInset: false,
       body: Column(
         children: [
-          const SizedBox(height: 132),
+          const SizedBox(height: 20),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 20),
+            child: OutlinedButton(
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => const MainPage()),
+                );
+              },
+              child: const Text('로그인 없이 진입'),
+            ),
+          ),
+          const SizedBox(height: 100),
           SizedBox(
-            height: 80,
+            height: 100,
             child: Image.asset('images/sketch_day_logo.png'), // 로고 이미지 경로
           ),
           const SizedBox(height: 76),
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 20),
+            padding: const EdgeInsets.symmetric(horizontal: 50),
             child: TextField(
               controller: _emailController,
               decoration: InputDecoration(
@@ -87,21 +100,32 @@ class _LoginPageState extends State<LoginPage> {
           ),
           const SizedBox(height: 12),
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 20),
+            padding: const EdgeInsets.symmetric(horizontal: 50),
             child: TextField(
               controller: _passwordController,
+              obscureText: _obscurePassword,
               decoration: InputDecoration(
                 hintText: '비밀번호 입력',
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(5),
                   borderSide: const BorderSide(width: 1),
                 ),
+                suffixIcon: IconButton( // Add this block
+                  icon: Icon(
+                    _obscurePassword ? Icons.visibility : Icons.visibility_off,
+                  ),
+                  onPressed: () {
+                    setState(() {
+                      _obscurePassword = !_obscurePassword;
+                    });
+                  },
+                ),
               ),
             ),
           ),
           const SizedBox(height: 4),
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 10),
+            padding: const EdgeInsets.symmetric(horizontal: 40),
             child: Row(
               children: [
                 Checkbox(
@@ -114,7 +138,7 @@ class _LoginPageState extends State<LoginPage> {
           ),
           const SizedBox(height: 10),
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 20),
+            padding: const EdgeInsets.symmetric(horizontal: 50),
             child: ElevatedButton(
               onPressed: _isLoginButtonEnabled ? _handleLogin: null,
               style: ElevatedButton.styleFrom(
@@ -129,7 +153,7 @@ class _LoginPageState extends State<LoginPage> {
           ),
           const SizedBox(height: 12),
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 20),
+            padding: const EdgeInsets.symmetric(horizontal: 50),
             child: OutlinedButton(
               onPressed: () {
                 Navigator.push(
