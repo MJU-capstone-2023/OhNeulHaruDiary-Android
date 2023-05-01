@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:sketch_day/screens/login/login_page.dart';
+import 'package:sketch_day/screens/main/main_page.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
-void main() {
-  runApp(MyApp()); // 앱 진입점
+Future main() async {
+  await dotenv.load(); // Add this line
+  runApp(MyApp());
 }
 
 class MyApp extends StatelessWidget {
@@ -10,7 +13,14 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'My App',
-      home: LoginPage(),
+      initialRoute: '/',
+      routes: {
+        '/': (context) => LoginPage(),
+        '/main': (context) => const MainPage(),
+      },
+      theme: ThemeData(
+        colorScheme: ColorScheme.fromSwatch(primarySwatch: Colors.indigo),
+      ),
     );
   }
 }
