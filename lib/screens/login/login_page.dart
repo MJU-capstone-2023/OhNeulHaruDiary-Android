@@ -44,7 +44,7 @@ class _LoginPageState extends State<LoginPage> {
     final password = _passwordController.text;
 
     final response = await http.post(
-      Uri.parse(dotenv.env['API_URL']!),
+      Uri.parse('${dotenv.env['BASE_URL']}!}/auth/login'),
       body: {
         'email': email,
         'password': password,
@@ -80,12 +80,12 @@ class _LoginPageState extends State<LoginPage> {
               child: const Text('로그인 없이 진입'),
             ),
           ),
-          const SizedBox(height: 100),
+          const SizedBox(height: 40),
           SizedBox(
-            height: 100,
-            child: Image.asset('images/sketch_day_logo.png'), // 로고 이미지 경로
+            height: 200,
+            child: Image.asset('images/logo.png'), // 로고 이미지 경로
           ),
-          const SizedBox(height: 76),
+          const SizedBox(height: 32),
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 50),
             child: TextField(
@@ -93,7 +93,7 @@ class _LoginPageState extends State<LoginPage> {
               decoration: InputDecoration(
                 hintText: '아이디 입력',
                 border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(5),
+                  borderRadius: BorderRadius.circular(8),
                   borderSide: const BorderSide(width: 1),
                 ),
               ),
@@ -108,7 +108,7 @@ class _LoginPageState extends State<LoginPage> {
               decoration: InputDecoration(
                 hintText: '비밀번호 입력',
                 border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(5),
+                  borderRadius: BorderRadius.circular(8),
                   borderSide: const BorderSide(width: 1),
                 ),
                 suffixIcon: IconButton( // Add this block
@@ -144,7 +144,7 @@ class _LoginPageState extends State<LoginPage> {
               onPressed: _isLoginButtonEnabled ? _handleLogin: null,
               style: ElevatedButton.styleFrom(
                 shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(5), // 모서리 둥글기
+                  borderRadius: BorderRadius.circular(8), // 모서리 둥글기
                 ),
                 minimumSize:
                     Size(MediaQuery.of(context).size.width, 50), // 최소 크기
@@ -164,7 +164,7 @@ class _LoginPageState extends State<LoginPage> {
               },
               style: OutlinedButton.styleFrom(
                 shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(5),
+                  borderRadius: BorderRadius.circular(8),
                 ),
                 side: const BorderSide(color: Colors.indigo, width: 1),
                 minimumSize:
