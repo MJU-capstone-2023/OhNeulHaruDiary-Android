@@ -18,43 +18,59 @@ class _SignUpPageState extends State<SignUpPage> {
   final _verificationCodeController = TextEditingController();
   bool _emailVerificationVisible = false;
   bool _agreedToTerms = false;
+  DateTime? _selectedDate;
 
   Future<void> _sendEmailVerification() async {
     if (!RegExp(r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$")
         .hasMatch(_emailController.text)) {
-      Fluttertoast.showToast(
-        msg: "이메일 형식이 아닙니다.",
-        toastLength: Toast.LENGTH_SHORT,
-        gravity: ToastGravity.BOTTOM,
-        timeInSecForIosWeb: 1,
-        backgroundColor: Colors.red,
-        textColor: Colors.white,
-        fontSize: 16.0,
-      );
+      Fluttertoast.showToast(msg: "이메일 형식이 아닙니다.");
       return;
     }
 
     // Implement your email verification logic here
     await http.post(
-      Uri.parse(dotenv.env['API_URL']!),
+      Uri.parse('${dotenv.env['BASE_URL']}!}/auth/signup'),
       body: {
+        'name': _nameController.text,
         'email': _emailController.text,
+        'password': _passwordController.text,
+        'birth': _birthDateController.text,
       },
     );
   }
 
-  @override
-  Widget build(BuildContext context) {
-    InputDecoration _inputDecoration({required String labelText}) {
-      return InputDecoration(
+  // 비밀번호 확인 함수
+  void _checkPasswordsMatch() {
+    if (_passwordController.text != _confirmPasswordController.text) {
+      Fluttertoast.showToast(msg: "비밀번호가 일치하지 않습니다");
+    }
+  }
+
+  // TextFormField 생성을 위한 함수
+  Widget _buildTextFormField({
+    required TextEditingController controller,
+    required String labelText,
+    TextInputType keyboardType = TextInputType.text,
+    bool obscureText = false,
+    void Function(String)? onChanged,
+  }) {
+    return TextFormField(
+      controller: controller,
+      keyboardType: keyboardType,
+      obscureText: obscureText,
+      decoration: InputDecoration(
         labelText: labelText,
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(5),
           borderSide: BorderSide(width: 1),
         ),
-      );
-    }
+      ),
+      onChanged: onChanged,
+    );
+  }
 
+  @override
+  Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         title: const Text(
@@ -79,9 +95,9 @@ class _SignUpPageState extends State<SignUpPage> {
             const SizedBox(height: 72),
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 42),
-              child: TextFormField(
+              child: _buildTextFormField(
                 controller: _nameController,
-                decoration: _inputDecoration(labelText: '이름'),
+                labelText: '이름',
               ),
             ),
             const SizedBox(height: 18),
@@ -90,21 +106,23 @@ class _SignUpPageState extends State<SignUpPage> {
               child: Row(
                 children: [
                   Expanded(
-                    child: TextFormField(
+                    child: _buildTextFormField(
                       controller: _emailController,
-                      decoration: _inputDecoration(labelText: '이메일 주소'),
+                      labelText: '이메일 주소',
+                      keyboardType: TextInputType.emailAddress,
                     ),
                   ),
                   const SizedBox(width: 18),
                   SizedBox(
                     height: 48,
                     child: ElevatedButton(
-                      onPressed: () {
-                        setState(() {
-                          _emailVerificationVisible = true;
-                        });
-                        _sendEmailVerification();
-                      },
+                      onPressed: _emailController.text.isNotEmpty ? () {
+                              setState(() {
+                                _emailVerificationVisible = true;
+                              });
+                              _sendEmailVerification();
+                              FocusScope.of(context).unfocus();
+                            } : null,
                       child: const Text('인증'),
                     ),
                   ),
@@ -113,24 +131,29 @@ class _SignUpPageState extends State<SignUpPage> {
             ),
             if (_emailVerificationVisible)
               Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 42, vertical: 18),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 42, vertical: 18),
                 child: Row(
                   children: [
                     Expanded(
-                      child: TextFormField(
+                      child: _buildTextFormField(
                         controller: _verificationCodeController,
-                        decoration: _inputDecoration(labelText: '인증번호'),
+                        labelText: '인증번호',
                       ),
                     ),
                     const SizedBox(width: 18),
-                    ElevatedButton(
-                      onPressed: () {
-                        setState(() {
-                          _emailVerificationVisible = true;
-                        });
-                        _sendEmailVerification();
-                      },
-                      child: const Text('인증'),
+                    SizedBox(
+                      height: 48,
+                      child: ElevatedButton(
+                        onPressed: _verificationCodeController.text.isNotEmpty ? () {
+                                setState(() {
+                                  _emailVerificationVisible = true;
+                                });
+                                _sendEmailVerification();
+                                FocusScope.of(context).unfocus();
+                              } : null,
+                        child: const Text('확인'),
+                      ),
                     ),
                   ],
                 ),
@@ -138,28 +161,50 @@ class _SignUpPageState extends State<SignUpPage> {
             const SizedBox(height: 18),
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 42),
-              child: TextFormField(
+              child: _buildTextFormField(
                 controller: _passwordController,
+                labelText: '비밀번호',
                 obscureText: true,
-                decoration: _inputDecoration(labelText: '비밀번호'),
               ),
             ),
             const SizedBox(height: 18),
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 42),
-              child: TextFormField(
+              child: _buildTextFormField(
                 controller: _confirmPasswordController,
+                labelText: '비밀번호 확인',
                 obscureText: true,
-                decoration: _inputDecoration(labelText: '비밀번호 확인'),
+                onChanged: (value) =>
+                    _checkPasswordsMatch(),
               ),
             ),
             const SizedBox(height: 18),
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 42),
-              child: TextFormField(
-                controller: _birthDateController,
-                keyboardType: TextInputType.datetime,
-                decoration: _inputDecoration(labelText: '생년월일'),
+              child: InkWell(
+                onTap: () async {
+                  FocusScope.of(context).unfocus();
+                  final DateTime? picked = await showDatePicker(
+                    context: context,
+                    initialDate: DateTime.now(),
+                    firstDate: DateTime(1900),
+                    lastDate: DateTime.now(),
+                  );
+                  if (picked != null) {
+                    setState(() {
+                      _selectedDate = picked;
+                      _birthDateController.text =
+                          '${picked.year}-${picked.month}-${picked.day}';
+                    });
+                  }
+                },
+                child: AbsorbPointer(
+                  child: _buildTextFormField(
+                    controller: _birthDateController,
+                    labelText: '생년월일',
+                    keyboardType: TextInputType.datetime,
+                  ),
+                ),
               ),
             ),
             const SizedBox(height: 4),
@@ -180,16 +225,16 @@ class _SignUpPageState extends State<SignUpPage> {
               padding: const EdgeInsets.symmetric(horizontal: 50, vertical: 40),
               child: ElevatedButton(
                 onPressed: _nameController.text.isNotEmpty &&
-                    _emailController.text.isNotEmpty &&
-                    _passwordController.text.isNotEmpty &&
-                    _confirmPasswordController.text.isNotEmpty &&
-                    _birthDateController.text.isNotEmpty &&
-                    _agreedToTerms
-                    ? () { }
+                        _emailController.text.isNotEmpty &&
+                        _passwordController.text.isNotEmpty &&
+                        _confirmPasswordController.text.isNotEmpty &&
+                        _birthDateController.text.isNotEmpty &&
+                        _agreedToTerms
+                    ? () {}
                     : null,
                 style: ElevatedButton.styleFrom(
                   minimumSize:
-                  Size(MediaQuery.of(context).size.width, 50), // 최소 크기
+                      Size(MediaQuery.of(context).size.width, 50), // 최소 크기
                 ),
                 child: const Text('회원가입'),
               ),
