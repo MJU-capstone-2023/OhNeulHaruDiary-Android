@@ -12,14 +12,56 @@ class SignUpPage extends StatefulWidget {
 class _SignUpPageState extends State<SignUpPage> {
   final _nameController = TextEditingController();
   final _emailController = TextEditingController();
+  final _verificationCodeController = TextEditingController();
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
   final _birthDateController = TextEditingController();
-  final _verificationCodeController = TextEditingController();
-  bool _emailVerificationVisible = false;
-  bool _agreedToTerms = false;
-  DateTime? _selectedDate;
 
+  bool _agreedToTerms = false;
+  bool _emailVerificationVisible = false;
+  DateTime? _selectedDate;
+  bool _emailVerificationDisabled = false;
+  bool _verificationCodeDisabled = false;
+  bool _passwordVisible = false;
+  bool _confirmPasswordVisible = false;
+
+  bool _isPasswordValid = true;
+  String _passwordWarning = "";
+  bool _isConfirmPasswordValid = true;
+  String _confirmPasswordWarning = "";
+
+  // 비밀번호 유효성 검사
+  void _validatePassword(String value) {
+    final RegExp passwordRegExp = RegExp(r'^(?=.*[a-z])(?=.*\d)[a-z\d]{8,16}$');
+    if (!passwordRegExp.hasMatch(value)) {
+      setState(() {
+        _isPasswordValid = false;
+        _passwordWarning = "비밀번호는 영어 소문자와 숫자 조합으로 8~16자 사이여야 합니다.";
+      });
+    } else {
+      setState(() {
+        _isPasswordValid = true;
+        _passwordWarning = "";
+      });
+    }
+  }
+
+  // 비밀번호 확인
+  void _validateConfirmPassword(String value) {
+    if (value != _passwordController.text) {
+      setState(() {
+        _isConfirmPasswordValid = false;
+        _confirmPasswordWarning = "비밀번호가 일치하지 않습니다.";
+      });
+    } else {
+      setState(() {
+        _isConfirmPasswordValid = true;
+        _confirmPasswordWarning = "";
+      });
+    }
+  }
+
+  // POST: 인증번호 전송
   Future<void> _sendEmailVerification() async {
     if (!RegExp(r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$")
         .hasMatch(_emailController.text)) {
@@ -27,43 +69,91 @@ class _SignUpPageState extends State<SignUpPage> {
       return;
     }
 
-    // Implement your email verification logic here
-    await http.post(
-      Uri.parse('${dotenv.env['BASE_URL']}!}/auth/signup'),
+    final response = await http.post(
+      Uri.parse('${dotenv.env['BASE_URL']}!}/auth/sendEmail'),
       body: {
-        'name': _nameController.text,
         'email': _emailController.text,
-        'password': _passwordController.text,
-        'birth': _birthDateController.text,
       },
     );
-  }
 
-  // 비밀번호 확인 함수
-  void _checkPasswordsMatch() {
-    if (_passwordController.text != _confirmPasswordController.text) {
-      Fluttertoast.showToast(msg: "비밀번호가 일치하지 않습니다");
+    if (response.statusCode == 200) {
+      setState(() {
+        _emailVerificationVisible = true;
+        _emailVerificationDisabled = true;
+      });
+    } else {
+      setState(() {
+        _emailVerificationVisible = false;
+      });
     }
   }
 
-  // TextFormField 생성을 위한 함수
+  // POST: 인증번호 검증
+  Future<void> _verifyVerificationCode() async {
+    final response = await http.post(
+      Uri.parse('${dotenv.env['BASE_URL']}!}/auth/verifyEmail'),
+      body: {
+        'email': _emailController.text,
+        'verification_code': _verificationCodeController.text,
+      },
+    );
+
+    if (response.statusCode == 200) {
+      setState(() {
+        _verificationCodeDisabled = true;
+      });
+    } else {
+      Fluttertoast.showToast(msg: "인증 실패, 인증번호를 확인해주세요.");
+    }
+  }
+
+  // POST: 회원가입
+  Future<void> _handleSignup() async {
+    final response = await http.post(
+      Uri.parse('${dotenv.env['BASE_URL']}!}/auth/signup'),
+      body: {
+        'email': _emailController.text,
+        'password': _passwordController.text,
+        'birth': _birthDateController.text,
+        'name': _nameController,
+      },
+    );
+
+    if (response.statusCode == 200) {
+      setState(() {
+        _verificationCodeDisabled = true;
+      });
+      Fluttertoast.showToast(
+          msg: "인증 완료 되었습니다.", backgroundColor: Colors.green);
+    } else {
+      Fluttertoast.showToast(msg: "인증 실패, 인증번호를 확인해주세요.");
+    }
+  }
+
+  // TextFormField 생성
   Widget _buildTextFormField({
     required TextEditingController controller,
     required String labelText,
     TextInputType keyboardType = TextInputType.text,
     bool obscureText = false,
     void Function(String)? onChanged,
+    bool readOnly = false,
+    Widget? suffixIcon,
+    String? errorText,
   }) {
     return TextFormField(
       controller: controller,
       keyboardType: keyboardType,
       obscureText: obscureText,
+      readOnly: readOnly,
       decoration: InputDecoration(
         labelText: labelText,
+        suffixIcon: suffixIcon,
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(5),
-          borderSide: BorderSide(width: 1),
+          borderSide: const BorderSide(width: 1),
         ),
+        errorText: errorText,
       ),
       onChanged: onChanged,
     );
@@ -116,13 +206,13 @@ class _SignUpPageState extends State<SignUpPage> {
                   SizedBox(
                     height: 48,
                     child: ElevatedButton(
-                      onPressed: _emailController.text.isNotEmpty ? () {
-                              setState(() {
-                                _emailVerificationVisible = true;
-                              });
-                              _sendEmailVerification();
+                      onPressed: _emailVerificationDisabled
+                          ? null
+                          : () {
+                              // _sendEmailVerification();
+                              _emailVerificationVisible = true; // test
                               FocusScope.of(context).unfocus();
-                            } : null,
+                            },
                       child: const Text('인증'),
                     ),
                   ),
@@ -145,17 +235,34 @@ class _SignUpPageState extends State<SignUpPage> {
                     SizedBox(
                       height: 48,
                       child: ElevatedButton(
-                        onPressed: _verificationCodeController.text.isNotEmpty ? () {
-                                setState(() {
-                                  _emailVerificationVisible = true;
-                                });
-                                _sendEmailVerification();
-                                FocusScope.of(context).unfocus();
-                              } : null,
+                        onPressed: _verificationCodeDisabled
+                            ? null
+                            : () {
+                            // _verifyVerificationCode();
+                            Future.delayed(const Duration(seconds: 1), () {
+                              Fluttertoast.showToast(
+                                  msg: "인증 완료 되었습니다.");
+                              setState(() {
+                                _verificationCodeDisabled = true;
+                              });
+                            FocusScope.of(context).unfocus();
+                          });
+                        },
                         child: const Text('확인'),
                       ),
                     ),
                   ],
+                ),
+              ),
+            if(_verificationCodeDisabled)
+              const Padding(
+                padding: EdgeInsets.only(left: 45),
+                child: Align(
+                  alignment: Alignment.centerLeft,
+                  child: Text(
+                    "이메일 인증이 완료 되었습니다.",
+                    style: TextStyle(color: Colors.green),
+                  ),
                 ),
               ),
             const SizedBox(height: 18),
@@ -164,7 +271,21 @@ class _SignUpPageState extends State<SignUpPage> {
               child: _buildTextFormField(
                 controller: _passwordController,
                 labelText: '비밀번호',
-                obscureText: true,
+                obscureText: !_passwordVisible,
+                onChanged: _validatePassword,
+                keyboardType: TextInputType.visiblePassword,
+                readOnly: false,
+                suffixIcon: IconButton(
+                  onPressed: () {
+                    setState(() {
+                      _passwordVisible = !_passwordVisible;
+                    });
+                  },
+                  icon: Icon(_passwordVisible
+                      ? Icons.visibility
+                      : Icons.visibility_off),
+                ),
+                errorText: _isPasswordValid ? null : _passwordWarning,
               ),
             ),
             const SizedBox(height: 18),
@@ -173,9 +294,21 @@ class _SignUpPageState extends State<SignUpPage> {
               child: _buildTextFormField(
                 controller: _confirmPasswordController,
                 labelText: '비밀번호 확인',
-                obscureText: true,
-                onChanged: (value) =>
-                    _checkPasswordsMatch(),
+                obscureText: !_confirmPasswordVisible,
+                onChanged: _validateConfirmPassword,
+                keyboardType: TextInputType.visiblePassword,
+                readOnly: false,
+                suffixIcon: IconButton(
+                  onPressed: () {
+                    setState(() {
+                      _confirmPasswordVisible = !_confirmPasswordVisible;
+                    });
+                  },
+                  icon: Icon(_confirmPasswordVisible
+                      ? Icons.visibility
+                      : Icons.visibility_off),
+                ),
+                errorText: _isConfirmPasswordValid ? null : _confirmPasswordWarning,
               ),
             ),
             const SizedBox(height: 18),
@@ -203,6 +336,7 @@ class _SignUpPageState extends State<SignUpPage> {
                     controller: _birthDateController,
                     labelText: '생년월일',
                     keyboardType: TextInputType.datetime,
+                    readOnly: true,
                   ),
                 ),
               ),
@@ -217,6 +351,7 @@ class _SignUpPageState extends State<SignUpPage> {
                   setState(() {
                     _agreedToTerms = value!;
                   });
+                  Fluttertoast.showToast(msg: "$_verificationCodeDisabled, $_isPasswordValid, $_isConfirmPasswordValid");
                 },
                 title: const Text('서비스 약관 동의'),
               ),
@@ -226,11 +361,14 @@ class _SignUpPageState extends State<SignUpPage> {
               child: ElevatedButton(
                 onPressed: _nameController.text.isNotEmpty &&
                         _emailController.text.isNotEmpty &&
+                        _verificationCodeDisabled &&
                         _passwordController.text.isNotEmpty &&
+                        _isPasswordValid &&
+                        _isConfirmPasswordValid &&
                         _confirmPasswordController.text.isNotEmpty &&
                         _birthDateController.text.isNotEmpty &&
                         _agreedToTerms
-                    ? () {}
+                    ? _handleSignup
                     : null,
                 style: ElevatedButton.styleFrom(
                   minimumSize:
