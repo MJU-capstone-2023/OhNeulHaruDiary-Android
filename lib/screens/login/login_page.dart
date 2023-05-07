@@ -83,7 +83,7 @@ class _LoginPageState extends State<LoginPage> {
           const SizedBox(height: 40),
           SizedBox(
             height: 200,
-            child: Image.asset('images/logo.png'), // 로고 이미지 경로
+            child: Image.asset('images/logo_v2.png'), // 로고 이미지 경로
           ),
           const SizedBox(height: 32),
           Padding(
