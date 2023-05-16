@@ -19,7 +19,19 @@ class MyApp extends StatelessWidget {
         '/main': (context) => const MainPage(),
       },
       theme: ThemeData(
-        colorScheme: ColorScheme.fromSwatch(primarySwatch: Colors.indigo),
+        colorScheme: const ColorScheme(
+          primary: Color(0xFF093879),
+          secondary: Colors.indigo,
+          background: Colors.white,
+          surface: Colors.white,
+          onPrimary: Colors.white,
+          onSecondary: Colors.black,
+          onBackground: Colors.black,
+          onSurface: Colors.black,
+          onError: Colors.black,
+          error: Colors.red,
+          brightness: Brightness.light,
+        ),
       ),
     );
   }
