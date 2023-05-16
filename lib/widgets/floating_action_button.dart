@@ -10,8 +10,12 @@ class FloatingActionButtonWidget extends StatelessWidget {
   Widget build(BuildContext context) {
     return FloatingActionButton(
       onPressed: onPressed,
-      backgroundColor: Colors.blue,
-      child: Icon(icon),
+      backgroundColor: Colors.white,
+      elevation: 3,
+      child: Icon(
+        icon,
+        color: const Color(0xFF093879),
+      ),
     );
   }
 }

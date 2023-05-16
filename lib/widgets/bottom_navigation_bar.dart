@@ -26,8 +26,8 @@ class _BottomNavigationBarWidgetState extends State<BottomNavigationBarWidget> {
         ),
       ],
       currentIndex: widget.selectedIndex,
-      selectedItemColor: Colors.blue,
       onTap: widget.onTap,
+      unselectedItemColor: Theme.of(context).colorScheme.primary.withOpacity(0.5),
     );
   }
 }
