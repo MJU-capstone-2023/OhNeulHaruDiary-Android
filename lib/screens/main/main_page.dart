@@ -119,7 +119,7 @@ class _MainPageState extends State<MainPage> {
                       Navigator.push(
                         context,
                         MaterialPageRoute(
-                          builder: (context) => const UploadPhotoPage(),
+                          builder: (context) => UploadPhotoPage(),
                         ),
                       );
                     },
