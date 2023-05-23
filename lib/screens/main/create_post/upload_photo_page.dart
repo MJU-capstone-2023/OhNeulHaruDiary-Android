@@ -1,6 +1,12 @@
+import 'dart:convert';
 import 'dart:io';
+
+import 'package:async/async.dart';
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
 import 'package:image_picker/image_picker.dart';
+import 'package:path/path.dart' as p;
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 class UploadPhotoPage extends StatefulWidget {
   @override
@@ -39,6 +45,50 @@ class _WritePageState extends State<UploadPhotoPage> {
     });
   }
 
+  Future<void> uploadImages() async {
+    for (var image in images) {
+      await uploadImage(File(image.path));
+    }
+  }
+
+  Future<String> getUploadUrl(String imageName) async {
+    final response = await http.put(
+      Uri.parse('${dotenv.env['BASE_URL']}/diary/getS3Url'),
+    );
+
+    if (response.statusCode == 200) {
+      var data = json.decode(response.body);
+      return data['uploadUrl'];
+    } else {
+      throw Exception('이미지 업로드에 실패했습니다.');
+    }
+  }
+
+  Future<void> uploadImage(File imageFile) async {
+    var stream = http.ByteStream(DelegatingStream.typed(imageFile.openRead()));
+    var length = await imageFile.length();
+
+    String uploadUrl = await getUploadUrl(p.basename(imageFile.path));
+    var uri = Uri.parse(uploadUrl);
+
+    var request = http.MultipartRequest("PUT", uri);
+    var multipartFile = http.MultipartFile('file', stream, length,
+        filename: p.basename(imageFile.path));
+
+    request.files.add(multipartFile);
+
+    var response = await request.send();
+
+    if (response.statusCode == 200) {
+      print("Image Uploaded");
+    } else {
+      print("Upload Failed");
+    }
+    response.stream.transform(utf8.decoder).listen((value) {
+      print(value);
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -57,10 +107,10 @@ class _WritePageState extends State<UploadPhotoPage> {
                 const Spacer(),
                 TextButton(
                   onPressed: () {
-                    Navigator.pop(context);
+                    uploadImages(); // 이미지 s3에 업로드
                   },
                   child: const Text(
-                    '생성',
+                    '다음',
                     style: TextStyle(
                       fontWeight: FontWeight.bold,
                       fontSize: 16,
