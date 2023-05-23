@@ -44,7 +44,7 @@ class _LoginPageState extends State<LoginPage> {
     final password = _passwordController.text;
 
     final response = await http.post(
-      Uri.parse('${dotenv.env['BASE_URL']}!}/auth/login'),
+      Uri.parse('${dotenv.env['BASE_URL']}/auth/login'),
       body: {
         'email': email,
         'password': password,
