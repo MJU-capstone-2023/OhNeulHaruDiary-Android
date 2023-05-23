@@ -16,7 +16,7 @@ class MainPage extends StatefulWidget {
 
 class _MainPageState extends State<MainPage> {
   int _selectedIndex = 0;
-  final List<Widget> _pages = [Diary(), const Mypage()];
+  final List<Widget> _pages = [Diary(), Mypage()];
 
   @override
   Widget build(BuildContext context) {
