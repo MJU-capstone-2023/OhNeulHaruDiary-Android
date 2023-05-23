@@ -4,6 +4,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:http/http.dart' as http;
 
+import 'create_post/view_diary_page.dart';
+
 class Diary extends StatefulWidget {
   @override
   _DiaryState createState() => _DiaryState();
@@ -138,11 +140,21 @@ class _DiaryState extends State<Diary> {
                           ),
                           itemCount: diaries[index]['diaries'].length,
                           itemBuilder: (context, index2) {
-                            return ClipRRect(
-                              borderRadius: BorderRadius.circular(5),
-                              child: Image.network(
-                                diaries[index]['diaries'][index2]['image'],
-                                fit: BoxFit.cover,
+                            return GestureDetector(
+                              onTap: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => ViewDiaryPage(diaryId: diaries[index]['diaries'][index2]['id']),
+                                  ),
+                                );
+                              },
+                              child: ClipRRect(
+                                borderRadius: BorderRadius.circular(5),
+                                child: Image.network(
+                                  diaries[index]['diaries'][index2]['image'],
+                                  fit: BoxFit.cover,
+                                ),
                               ),
                             );
                           },
