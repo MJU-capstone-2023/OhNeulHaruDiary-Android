@@ -1,4 +1,8 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:http/http.dart' as http;
 import 'package:sketch_day/screens/main/create_post/view_diary_page.dart';
 
 class WriteDiaryPage extends StatefulWidget {
@@ -8,6 +12,7 @@ class WriteDiaryPage extends StatefulWidget {
 
 class _WritePageState extends State<WriteDiaryPage> {
   DateTime selectedDate = DateTime.now(); // 선택된 날짜를 저장하기 위한 변수
+  final TextEditingController _textEditingController = TextEditingController();
 
   void showDatePickerDialog() async {
     final DateTime? pickedDate = await showDatePicker(
@@ -21,6 +26,25 @@ class _WritePageState extends State<WriteDiaryPage> {
       setState(() {
         selectedDate = pickedDate;
       });
+    }
+  }
+
+  Future<void> saveDiary() async {
+    final content = _textEditingController.text; // 일기 내용
+    final url = Uri.parse('${dotenv.env['BASE_URL']}/diary/create');
+
+    final response = await http.post(
+      url,
+      body: {
+        'content': content,
+        'date': selectedDate.toString(),
+      },
+    );
+
+    if (response.statusCode == 200) {
+      print('일기 저장 성공');
+    } else {
+      print('일기 저장 실패');
     }
   }
 
@@ -42,7 +66,7 @@ class _WritePageState extends State<WriteDiaryPage> {
                 const Spacer(),
                 TextButton(
                   onPressed: () {
-                    Navigator.pop(context);
+                    saveDiary();
                   },
                   child: const Text(
                     '저장',
@@ -103,6 +127,7 @@ class _WritePageState extends State<WriteDiaryPage> {
               padding:
                   const EdgeInsets.symmetric(vertical: 10.0, horizontal: 20.0),
               child: TextField(
+                controller: _textEditingController,
                 expands: true,
                 maxLines: null,
                 textAlignVertical: TextAlignVertical.top,
