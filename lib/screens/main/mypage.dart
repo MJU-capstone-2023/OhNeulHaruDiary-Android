@@ -14,26 +14,23 @@ class Mypage extends StatelessWidget {
       '${dotenv.env['BASE_URL']}/auth/signout'; // 계정 삭제 처리를 위한 URL
 
   Future<void> logout(BuildContext context) async {
-    var response = await http.get(Uri.parse(logoutUrl));
-    if (response.statusCode == 200) {
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(
-          builder: (context) => LoginPage(),
-        ),
-      ); // 로그인 페이지로 이동
-    } else {
-      Fluttertoast.showToast(
-        msg: '로그아웃에 실패하였습니다',
-        toastLength: Toast.LENGTH_SHORT,
-        gravity: ToastGravity.BOTTOM,
-        backgroundColor: Colors.red,
-        textColor: Colors.white,
-      );
+    try {
+      var response = await http.get(Uri.parse(logoutUrl));
+      if (response.statusCode == 200) {
+        Navigator.pushAndRemoveUntil(
+          context,
+          MaterialPageRoute(builder: (context) => LoginPage()),
+          (route) => false,
+        );
+      } else {
+        showToast('로그아웃에 실패하였습니다');
+      }
+    } catch (e) {
+      showToast('로그아웃에 실패하였습니다');
     }
   }
 
-  Future<Future<bool?>> showConfirmationDialog(BuildContext context) async {
+  Future<bool?> showConfirmationDialog(BuildContext context) async {
     return showDialog<bool>(
       context: context,
       builder: (BuildContext context) {
@@ -44,13 +41,13 @@ class Mypage extends StatelessWidget {
             TextButton(
               child: const Text('예'),
               onPressed: () {
-                Navigator.of(context).pop(true); // 다이얼로그 닫고 true를 반환하여 '예'를 누른 것을 알림
+                Navigator.of(context).pop(true);
               },
             ),
             TextButton(
               child: const Text('아니오'),
               onPressed: () {
-                Navigator.of(context).pop(false); // 다이얼로그 닫고 false를 반환하여 '아니오'를 누른 것을 알림
+                Navigator.of(context).pop(false);
               },
             ),
           ],
@@ -59,28 +56,34 @@ class Mypage extends StatelessWidget {
     );
   }
 
-
   Future<void> signout(BuildContext context) async {
-    bool? confirmed = (await showConfirmationDialog(context)) as bool?; // 경고창
-    if(confirmed == true) {
-      var response = await http.patch(Uri.parse(deleteAccountUrl));
-      if (response.statusCode == 200) {
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (context) => LoginPage(),
-          ),
-        ); // 로그인 페이지로 이동
-      } else {
-        Fluttertoast.showToast(
-          msg: '회원탈퇴에 실패하였습니다',
-          toastLength: Toast.LENGTH_SHORT,
-          gravity: ToastGravity.BOTTOM,
-          backgroundColor: Colors.red,
-          textColor: Colors.white,
-        );
+    bool? confirmed = await showConfirmationDialog(context);
+    if (confirmed == true) {
+      try {
+        var response = await http.get(Uri.parse(deleteAccountUrl));
+        if (response.statusCode == 200) {
+          Navigator.pushAndRemoveUntil(
+            context,
+            MaterialPageRoute(builder: (context) => LoginPage()),
+            (route) => false,
+          );
+        } else {
+          showToast('회원탈퇴에 실패하였습니다');
+        }
+      } catch (e) {
+        showToast('회원탈퇴에 실패하였습니다');
       }
     }
+  }
+
+  void showToast(String message) {
+    Fluttertoast.showToast(
+      msg: message,
+      toastLength: Toast.LENGTH_SHORT,
+      gravity: ToastGravity.BOTTOM,
+      backgroundColor: Colors.red,
+      textColor: Colors.white,
+    );
   }
 
   @override
