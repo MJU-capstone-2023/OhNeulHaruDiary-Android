@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:http/http.dart' as http;
 import 'package:flutter_dotenv/flutter_dotenv.dart';
@@ -7,41 +8,31 @@ import '../login/login_page.dart';
 
 class Mypage extends StatelessWidget {
   Mypage({Key? key}) : super(key: key);
-
-  final String logoutUrl =
-      '${dotenv.env['BASE_URL']}/auth/logout'; // 로그아웃 처리를 위한 URL
-  final String deleteAccountUrl =
-      '${dotenv.env['BASE_URL']}/auth/signout'; // 계정 삭제 처리를 위한 URL
+  final storage = new FlutterSecureStorage();
 
   Future<void> logout(BuildContext context) async {
-    try {
-      var response = await http.get(Uri.parse(logoutUrl));
-      if (response.statusCode == 200) {
-        Navigator.pushAndRemoveUntil(
-          context,
-          MaterialPageRoute(builder: (context) => LoginPage()),
-          (route) => false,
-        );
-      } else {
-        showToast('로그아웃에 실패하였습니다');
-      }
-    } catch (e) {
-      showToast('로그아웃에 실패하였습니다');
-    }
+    await storage.delete(key: 'jwt_token');
+    Navigator.pushAndRemoveUntil(
+      context,
+      MaterialPageRoute(builder: (context) => LoginPage()),
+      (route) => false,
+    );
   }
 
-  Future<bool?> showConfirmationDialog(BuildContext context) async {
+  Future<bool?> showConfirmationDialog(
+      BuildContext context, String message, Function onConfirm) async {
     return showDialog<bool>(
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
           title: const Text('경고'),
-          content: const Text('모든 데이터가 삭제됩니다. 정말 탈퇴하시겠습니까?'),
+          content: Text(message),
           actions: <Widget>[
             TextButton(
               child: const Text('예'),
-              onPressed: () {
+              onPressed: () async {
                 Navigator.of(context).pop(true);
+                await onConfirm();
               },
             ),
             TextButton(
@@ -57,23 +48,28 @@ class Mypage extends StatelessWidget {
   }
 
   Future<void> signout(BuildContext context) async {
-    bool? confirmed = await showConfirmationDialog(context);
-    if (confirmed == true) {
-      try {
-        var response = await http.get(Uri.parse(deleteAccountUrl));
-        if (response.statusCode == 200) {
-          Navigator.pushAndRemoveUntil(
-            context,
-            MaterialPageRoute(builder: (context) => LoginPage()),
-            (route) => false,
-          );
-        } else {
+    bool? confirmed = await showConfirmationDialog(
+      context,
+      '정말로 회원탈퇴 하시겠습니까?',
+      () async {
+        try {
+          var response = await http
+              .get(Uri.parse('${dotenv.env['BASE_URL']}/auth/signout'));
+          if (response.statusCode == 200) {
+            await storage.delete(key: 'jwt_token');
+            Navigator.pushAndRemoveUntil(
+              context,
+              MaterialPageRoute(builder: (context) => LoginPage()),
+              (route) => false,
+            );
+          } else {
+            showToast('회원탈퇴에 실패하였습니다');
+          }
+        } catch (e) {
           showToast('회원탈퇴에 실패하였습니다');
         }
-      } catch (e) {
-        showToast('회원탈퇴에 실패하였습니다');
-      }
-    }
+      },
+    );
   }
 
   void showToast(String message) {
@@ -151,7 +147,13 @@ class Mypage extends StatelessWidget {
           ),
           const Divider(),
           GestureDetector(
-            onTap: () => logout(context),
+            onTap: () => {
+              showConfirmationDialog(
+                context,
+                '로그아웃 하시겠습니까?',
+                () => logout(context),
+              )
+            },
             child: const Padding(
               padding: EdgeInsets.symmetric(vertical: 10.0, horizontal: 20.0),
               child: Text(
