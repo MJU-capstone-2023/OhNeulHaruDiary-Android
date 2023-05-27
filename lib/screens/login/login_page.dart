@@ -45,7 +45,6 @@ class _LoginPageState extends State<LoginPage> {
   Future<void> _handleLogin() async {
     final email = _emailController.text;
     final password = _passwordController.text;
-    // print('${dotenv.env['BASE_URL']}/auth/login | $email $password');
 
     final response = await http.post(
       Uri.parse('${dotenv.env['BASE_URL']}/auth/login'),
@@ -61,9 +60,9 @@ class _LoginPageState extends State<LoginPage> {
     if (response.statusCode == 200) {
       final responseData = json.decode(response.body);
       Fluttertoast.showToast(msg: "로그인 성공! 반갑습니다:)");
-      // token 저장
-      String jwtToken = responseData['jwt_token']['access_token'];
-      await _authService.saveToken(jwtToken);
+      String accessToken = responseData['jwt_token']['access_token'];
+      String refreshToken = responseData['jwt_token']['refresh_token'];
+      await _authService.saveTokens(accessToken, refreshToken);
 
       Navigator.pushReplacement(
         context,
@@ -137,19 +136,6 @@ class _LoginPageState extends State<LoginPage> {
                   },
                 ),
               ),
-            ),
-          ),
-          const SizedBox(height: 4),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 40),
-            child: Row(
-              children: [
-                Checkbox(
-                  value: false,
-                  onChanged: (value) {},
-                ),
-                const Text('로그인 상태 유지'),
-              ],
             ),
           ),
           const SizedBox(height: 10),
