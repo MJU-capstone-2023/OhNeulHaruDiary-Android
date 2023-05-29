@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 import '../../../utils/authService.dart';
+import '../main_page.dart';
 
 class ViewDiaryPage extends StatefulWidget {
   final String diaryId;
@@ -21,10 +22,10 @@ class _ViewDiaryPageState extends State<ViewDiaryPage> {
   @override
   void initState() {
     super.initState();
-    _diary = _fetchDiary();
+    _diary = _getDiaryById();
   }
 
-  Future<Map<String, dynamic>> _fetchDiary() async {
+  Future<Map<String, dynamic>> _getDiaryById() async {
     final url = '${dotenv.env['BASE_URL']}/diary/${widget.diaryId}';
     final accessToken = await _authService.readAccessToken() ?? '';
     final response = await _authService.get(url, accessToken);
@@ -37,6 +38,49 @@ class _ViewDiaryPageState extends State<ViewDiaryPage> {
     } else {
       throw Exception('다이어리 상세 조회에 실패했습니다.');
     }
+  }
+
+  Future<void> _removeDiaryById() async {
+    final url = '${dotenv.env['BASE_URL']}/diary/del?id=${widget.diaryId}';
+    final accessToken = await _authService.readAccessToken() ?? '';
+    final response = await _authService.delete(url, accessToken);
+
+    if (response.statusCode == 200) {
+      Navigator.pushAndRemoveUntil(
+        context,
+        MaterialPageRoute(builder: (context) => MainPage()),
+        (route) => route == null,
+      );
+    } else {
+      throw Exception('다이어리 삭제에 실패했습니다.');
+    }
+  }
+
+  void _showDeleteDialog() {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('일기 삭제'),
+          content: const Text('정말 삭제 하시겠습니까?'),
+          actions: <Widget>[
+            TextButton(
+              child: const Text('취소'),
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+            ),
+            TextButton(
+              child: const Text('삭제'),
+              onPressed: () {
+                _removeDiaryById();
+                Navigator.of(context).pop();
+              },
+            ),
+          ],
+        );
+      },
+    );
   }
 
   @override
@@ -59,6 +103,30 @@ class _ViewDiaryPageState extends State<ViewDiaryPage> {
                         },
                         icon: const Icon(Icons.close),
                       ),
+                      const Spacer(),
+                      TextButton(
+                        onPressed: () {
+                          // TODO: 다이어리 수정 기능 구현
+                        },
+                        child: const Text(
+                          '수정',
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 16,
+                          ),
+                        ),
+                      ),
+                      SizedBox(width: 10),
+                      TextButton(
+                        onPressed: _showDeleteDialog,
+                        child: const Text(
+                          '삭제',
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 16,
+                          ),
+                        ),
+                      ),
                     ],
                   ),
                 ),
@@ -74,6 +142,26 @@ class _ViewDiaryPageState extends State<ViewDiaryPage> {
                           fontSize: 18.0,
                           fontWeight: FontWeight.bold,
                         ),
+                      ),
+                    ],
+                  ),
+                ),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 20.0),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      IconButton(
+                        onPressed: () {
+                          // TODO: 날씨 정보 표시 기능 구현
+                        },
+                        icon: const Icon(Icons.wb_sunny),
+                      ),
+                      IconButton(
+                        onPressed: () {
+                          // TODO: 기분 정보 표시 기능 구현
+                        },
+                        icon: const Icon(Icons.emoji_emotions),
                       ),
                     ],
                   ),
