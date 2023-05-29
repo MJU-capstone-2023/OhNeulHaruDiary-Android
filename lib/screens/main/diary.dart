@@ -33,7 +33,7 @@ class _DiaryState extends State<Diary> {
       data.forEach((key, value) {
         result.add({'year_month': key, 'diaries': value});
       });
-      print(response.body);
+      print(utf8.decode(response.bodyBytes));
       return result;
     } else {
       throw Exception('다이어리 조회에 실패했습니다.');
@@ -103,7 +103,7 @@ class _DiaryState extends State<Diary> {
                               child: diaries[index]['diaries'][index2]
                                           ['image_url'] ==
                                       null
-                                  ? Image.asset('images/placeholder.png',
+                                  ? Image.asset('images/logo_v2.png',
                                       fit: BoxFit.cover)
                                   : Image.network(
                                       diaries[index]['diaries'][index2]

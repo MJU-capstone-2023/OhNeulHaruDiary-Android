@@ -25,11 +25,14 @@ class _MainPageState extends State<MainPage> {
         backgroundColor: Colors.white,
         elevation: 1,
         shadowColor: Colors.grey[100],
-        leadingWidth: 140, // 앱바의 leading 영역의 너비를 변경
+        leadingWidth: 140,
+        // 앱바의 leading 영역의 너비를 변경
         leading: Padding(
           padding: const EdgeInsets.only(left: 15), // 좌측 여백 추가
           child: SizedBox(
-            child: Image.asset('images/logo_v3.png',),
+            child: Image.asset(
+              'images/logo_v3.png',
+            ),
           ),
         ),
       ),
