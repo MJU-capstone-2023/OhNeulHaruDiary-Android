@@ -2,23 +2,40 @@ import 'dart:convert';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
-import 'package:sketch_day/screens/main/create_post/update_diary_page.dart';
 
 import '../../../utils/authService.dart';
 import '../main_page.dart';
 
-class ViewDiaryPage extends StatefulWidget {
+class UpdateDiaryPage extends StatefulWidget {
   final String diaryId;
 
-  const ViewDiaryPage({Key? key, required this.diaryId}) : super(key: key);
+  const UpdateDiaryPage({Key? key, required this.diaryId}) : super(key: key);
 
   @override
-  _ViewDiaryPageState createState() => _ViewDiaryPageState();
+  _UpdateDiaryPageState createState() => _UpdateDiaryPageState();
 }
 
-class _ViewDiaryPageState extends State<ViewDiaryPage> {
+class _UpdateDiaryPageState extends State<UpdateDiaryPage> {
   Future<Map<String, dynamic>>? _diary;
   final _authService = AuthService();
+  DateTime selectedDate = DateTime.now();
+  TextEditingController _textEditingController = TextEditingController();
+
+  // 날짜 선택
+  void showDatePickerDialog() async {
+    final DateTime? pickedDate = await showDatePicker(
+      context: context,
+      initialDate: selectedDate,
+      firstDate: DateTime(2000),
+      lastDate: DateTime(2100),
+    );
+
+    if (pickedDate != null && pickedDate != selectedDate) {
+      setState(() {
+        selectedDate = pickedDate;
+      });
+    }
+  }
 
   @override
   void initState() {
@@ -26,6 +43,7 @@ class _ViewDiaryPageState extends State<ViewDiaryPage> {
     _diary = _getDiaryById();
   }
 
+  // 기존 일기 내용 GET
   Future<Map<String, dynamic>> _getDiaryById() async {
     final url = '${dotenv.env['BASE_URL']}/diary/${widget.diaryId}';
     final accessToken = await _authService.readAccessToken() ?? '';
@@ -37,14 +55,22 @@ class _ViewDiaryPageState extends State<ViewDiaryPage> {
       print(diary);
       return diary;
     } else {
-      throw Exception('다이어리 상세 조회에 실패했습니다.');
+      throw Exception('다이어리 조회에 실패했습니다.');
     }
   }
 
-  Future<void> _removeDiaryById() async {
-    final url = '${dotenv.env['BASE_URL']}/diary/del?id=${widget.diaryId}';
+  // 일기 수정
+  Future<void> _updateDiaryById() async {
+    final url = '${dotenv.env['BASE_URL']}/diary/update?id=${widget.diaryId}';
     final accessToken = await _authService.readAccessToken() ?? '';
-    final response = await _authService.delete(url, accessToken);
+
+    // 일기 내용 가져오기
+    final content = _textEditingController.text;
+    final response = await _authService.patch(
+      url,
+      accessToken,
+      body: {"new_content": content},
+    );
 
     if (response.statusCode == 200) {
       Navigator.pushAndRemoveUntil(
@@ -53,35 +79,8 @@ class _ViewDiaryPageState extends State<ViewDiaryPage> {
         (route) => route == null,
       );
     } else {
-      throw Exception('다이어리 삭제에 실패했습니다.');
+      throw Exception('다이어리 수정에 실패했습니다.');
     }
-  }
-
-  void _showDeleteDialog() {
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: const Text('일기 삭제'),
-          content: const Text('정말 삭제 하시겠습니까?'),
-          actions: <Widget>[
-            TextButton(
-              child: const Text('취소'),
-              onPressed: () {
-                Navigator.of(context).pop();
-              },
-            ),
-            TextButton(
-              child: const Text('삭제'),
-              onPressed: () {
-                _removeDiaryById();
-                Navigator.of(context).pop();
-              },
-            ),
-          ],
-        );
-      },
-    );
   }
 
   @override
@@ -106,29 +105,9 @@ class _ViewDiaryPageState extends State<ViewDiaryPage> {
                       ),
                       const Spacer(),
                       TextButton(
-                        onPressed: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => UpdateDiaryPage(
-                                diaryId: widget.diaryId,
-                              ),
-                            ),
-                          );
-                        },
+                        onPressed: () => _updateDiaryById(),
                         child: const Text(
-                          '수정',
-                          style: TextStyle(
-                            fontWeight: FontWeight.bold,
-                            fontSize: 16,
-                          ),
-                        ),
-                      ),
-                      SizedBox(width: 10),
-                      TextButton(
-                        onPressed: _showDeleteDialog,
-                        child: const Text(
-                          '삭제',
+                          '저장',
                           style: TextStyle(
                             fontWeight: FontWeight.bold,
                             fontSize: 16,
@@ -143,13 +122,18 @@ class _ViewDiaryPageState extends State<ViewDiaryPage> {
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      SizedBox(width: 10.0),
                       Text(
-                        snapshot.data!['date'] ?? '2000-00-00',
+                        '${selectedDate.year}년 ${selectedDate.month}월 ${selectedDate.day}일',
                         style: const TextStyle(
                           fontSize: 18.0,
                           fontWeight: FontWeight.bold,
                         ),
+                      ),
+                      IconButton(
+                        onPressed: () {
+                          showDatePickerDialog();
+                        },
+                        icon: const Icon(Icons.arrow_drop_down),
                       ),
                     ],
                   ),
@@ -161,13 +145,13 @@ class _ViewDiaryPageState extends State<ViewDiaryPage> {
                     children: [
                       IconButton(
                         onPressed: () {
-                          // TODO: 날씨 정보 표시 기능 구현
+                          // TODO: 날씨 선택 다이얼로그 표시
                         },
                         icon: const Icon(Icons.wb_sunny),
                       ),
                       IconButton(
                         onPressed: () {
-                          // TODO: 기분 정보 표시 기능 구현
+                          // TODO: 기분 선택 다이얼로그 표시
                         },
                         icon: const Icon(Icons.emoji_emotions),
                       ),
@@ -178,11 +162,25 @@ class _ViewDiaryPageState extends State<ViewDiaryPage> {
                   child: Padding(
                     padding: const EdgeInsets.symmetric(
                         vertical: 10.0, horizontal: 20.0),
-                    child: SingleChildScrollView(
-                      child: Text(
-                        snapshot.data!['content'] ?? '',
-                        style: const TextStyle(
-                          fontSize: 16.0,
+                    child: TextField(
+                      controller: _textEditingController
+                        ..text = snapshot.data!['content'] ?? '',
+                      expands: true,
+                      maxLines: null,
+                      textAlignVertical: TextAlignVertical.top,
+                      decoration: InputDecoration(
+                        hintText: '오늘 하루를 기록해보세요!',
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(15.0),
+                          borderSide: const BorderSide(color: Colors.grey),
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(15.0),
+                          borderSide: const BorderSide(color: Colors.grey),
+                        ),
+                        enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(15.0),
+                          borderSide: const BorderSide(color: Colors.grey),
                         ),
                       ),
                     ),

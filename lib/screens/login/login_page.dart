@@ -2,10 +2,12 @@ import 'dart:convert';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
-import 'package:sketch_day/screens/login/signup_page.dart';
-import 'package:http/http.dart' as http;
 import 'package:fluttertoast/fluttertoast.dart';
+import 'package:http/http.dart' as http;
+import 'package:sketch_day/screens/login/signup_page.dart';
 import 'package:sketch_day/screens/main/main_page.dart';
+
+import '../../utils/authService.dart';
 
 class LoginPage extends StatefulWidget {
   @override
@@ -13,6 +15,7 @@ class LoginPage extends StatefulWidget {
 }
 
 class _LoginPageState extends State<LoginPage> {
+  final _authService = AuthService();
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
   bool _isLoginButtonEnabled = false;
@@ -44,20 +47,30 @@ class _LoginPageState extends State<LoginPage> {
     final password = _passwordController.text;
 
     final response = await http.post(
-      Uri.parse('${dotenv.env['BASE_URL']}!}/auth/login'),
-      body: {
+      Uri.parse('${dotenv.env['BASE_URL']}/auth/login'),
+      headers: <String, String>{
+        'Content-Type': 'application/json; charset=UTF-8',
+      },
+      body: jsonEncode({
         'email': email,
         'password': password,
-      },
+      }),
     );
 
     if (response.statusCode == 200) {
-      // 로그인 성공
       final responseData = json.decode(response.body);
-      Navigator.pushNamed(context, '/mainpage');
+      Fluttertoast.showToast(msg: "로그인 성공! 반갑습니다:)");
+      String accessToken = responseData['jwt_token']['access_token'];
+      String refreshToken = responseData['jwt_token']['refresh_token'];
+      await _authService.saveTokens(accessToken, refreshToken);
+
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (context) => const MainPage()),
+      );
     } else {
-      // 로그인 실패
-      Fluttertoast.showToast(msg: "로그인에 실패했습니다. 이메일 혹은 비밀번호를 다시 확인해주세요.");
+      print(json.decode(response.body));
+      Fluttertoast.showToast(msg: "이메일 혹은 비밀번호를 다시 확인해주세요.");
     }
   }
 
@@ -111,7 +124,8 @@ class _LoginPageState extends State<LoginPage> {
                   borderRadius: BorderRadius.circular(8),
                   borderSide: const BorderSide(width: 1),
                 ),
-                suffixIcon: IconButton( // Add this block
+                suffixIcon: IconButton(
+                  // Add this block
                   icon: Icon(
                     _obscurePassword ? Icons.visibility : Icons.visibility_off,
                   ),
@@ -124,24 +138,11 @@ class _LoginPageState extends State<LoginPage> {
               ),
             ),
           ),
-          const SizedBox(height: 4),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 40),
-            child: Row(
-              children: [
-                Checkbox(
-                  value: false,
-                  onChanged: (value) {},
-                ),
-                const Text('로그인 상태 유지'),
-              ],
-            ),
-          ),
           const SizedBox(height: 10),
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 50),
             child: ElevatedButton(
-              onPressed: _isLoginButtonEnabled ? _handleLogin: null,
+              onPressed: _isLoginButtonEnabled ? _handleLogin : null,
               style: ElevatedButton.styleFrom(
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(8), // 모서리 둥글기

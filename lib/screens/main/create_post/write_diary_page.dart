@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:sketch_day/screens/main/create_post/view_diary_page.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:sketch_day/screens/main/main_page.dart';
+
+import '../../../utils/authService.dart';
 
 class WriteDiaryPage extends StatefulWidget {
   @override
@@ -8,6 +11,8 @@ class WriteDiaryPage extends StatefulWidget {
 
 class _WritePageState extends State<WriteDiaryPage> {
   DateTime selectedDate = DateTime.now(); // 선택된 날짜를 저장하기 위한 변수
+  final TextEditingController _textEditingController = TextEditingController();
+  final _authService = AuthService();
 
   void showDatePickerDialog() async {
     final DateTime? pickedDate = await showDatePicker(
@@ -21,6 +26,34 @@ class _WritePageState extends State<WriteDiaryPage> {
       setState(() {
         selectedDate = pickedDate;
       });
+    }
+  }
+
+  Future<void> saveDiary() async {
+    final content = _textEditingController.text; // 일기 내용
+    final url = '${dotenv.env['BASE_URL']}/diary/create';
+    final accessToken = await _authService.readAccessToken() ?? '';
+    final response = await _authService.post(
+      url,
+      accessToken,
+      body: {
+        'date': selectedDate.toIso8601String().split('T')[0],
+        'content': content,
+        'emo_id': "1",
+        'wea_id': "1"
+      },
+    );
+
+    if (response.statusCode == 200) {
+      Navigator.pushAndRemoveUntil(
+        context,
+        MaterialPageRoute(builder: (context) => MainPage()),
+        (route) => route == null,
+      );
+    } else {
+      print('${response.statusCode}, ${response.body}');
+      // print(utf8.decode(response.bodyBytes));
+      throw Exception('일기 저장에 실패했습니다.');
     }
   }
 
@@ -42,7 +75,7 @@ class _WritePageState extends State<WriteDiaryPage> {
                 const Spacer(),
                 TextButton(
                   onPressed: () {
-                    Navigator.pop(context);
+                    saveDiary();
                   },
                   child: const Text(
                     '저장',
@@ -78,8 +111,7 @@ class _WritePageState extends State<WriteDiaryPage> {
             ),
           ),
           Padding(
-            padding:
-                const EdgeInsets.symmetric(horizontal: 20.0),
+            padding: const EdgeInsets.symmetric(horizontal: 20.0),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
@@ -103,6 +135,7 @@ class _WritePageState extends State<WriteDiaryPage> {
               padding:
                   const EdgeInsets.symmetric(vertical: 10.0, horizontal: 20.0),
               child: TextField(
+                controller: _textEditingController,
                 expands: true,
                 maxLines: null,
                 textAlignVertical: TextAlignVertical.top,

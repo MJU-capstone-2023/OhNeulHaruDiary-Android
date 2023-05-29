@@ -1,8 +1,8 @@
 import 'dart:convert';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
-import 'package:http/http.dart' as http;
+import '../../utils/authService.dart';
+import 'create_post/view_diary_page.dart';
 
 class Diary extends StatefulWidget {
   @override
@@ -11,6 +11,7 @@ class Diary extends StatefulWidget {
 
 class _DiaryState extends State<Diary> {
   late Future<List<Map<String, dynamic>>> _futureDiaries;
+  final _authService = AuthService();
 
   @override
   void initState() {
@@ -18,78 +19,23 @@ class _DiaryState extends State<Diary> {
     _futureDiaries = _fetchDiaries();
   }
 
+  // 전체 일기 조회
   Future<List<Map<String, dynamic>>> _fetchDiaries() async {
-    final response = [
-      {
-        "year_month": "2023-01",
-        "diaries": [
-          {
-            "id": 1,
-            "image": "https://eco-cdn.iqpc.com/eco/images/channel_content/images/test.jpg"
-          },
-          {
-            "id": 2,
-            "image": "https://eco-cdn.iqpc.com/eco/images/channel_content/images/test.jpg"
-          },
-          {
-            "id": 1,
-            "image": "https://eco-cdn.iqpc.com/eco/images/channel_content/images/test.jpg"
-          },
-          {
-            "id": 2,
-            "image": "https://eco-cdn.iqpc.com/eco/images/channel_content/images/test.jpg"
-          }
-        ]
-      },
-      {
-        "year_month": "2022-02",
-        "diaries": [
-          {
-            "id": 7,
-            "image": "https://eco-cdn.iqpc.com/eco/images/channel_content/images/test.jpg"
-          },
-          {
-            "id": 8,
-            "image": "https://eco-cdn.iqpc.com/eco/images/channel_content/images/test.jpg"
-          },
-          {
-            "id": 9,
-            "image": "https://eco-cdn.iqpc.com/eco/images/channel_content/images/test.jpg"
-          },
-          {
-            "id": 10,
-            "image": "https://eco-cdn.iqpc.com/eco/images/channel_content/images/test.jpg"
-          },
-          {
-            "id": 9,
-            "image": "https://eco-cdn.iqpc.com/eco/images/channel_content/images/test.jpg"
-          }
-        ]
-      },
-      {
-        "year_month": "2020-11",
-        "diaries": [
-          {
-            "id": 1,
-            "image": "https://eco-cdn.iqpc.com/eco/images/channel_content/images/test.jpg"
-          },
-          {
-            "id": 2,
-            "image": "https://eco-cdn.iqpc.com/eco/images/channel_content/images/test.jpg"
-          }
-        ]
-      }
-    ];
-    return await Future.delayed(const Duration(seconds: 1), () => response);
+    final url = '${dotenv.env['BASE_URL']}/diary/lists';
+    final accessToken = await _authService.readAccessToken() ?? '';
+    final response = await _authService.get(url, accessToken);
 
-
-    // final response = await http.get(Uri.parse('${dotenv.env['BASE_URL']}!}/'),);
-    // if (response.statusCode == 200) {
-    //   final data = jsonDecode(response.body)['data'];
-    //   return List<Map<String, dynamic>>.from(data);
-    // } else {
-    //   throw Exception('Failed to load diaries');
-    // }
+    if (response.statusCode == 200) {
+      final data = jsonDecode(response.body)['data'];
+      List<Map<String, dynamic>> result = [];
+      data.forEach((key, value) {
+        result.add({'year_month': key, 'diaries': value});
+      });
+      print(utf8.decode(response.bodyBytes));
+      return result;
+    } else {
+      throw Exception('다이어리 조회에 실패했습니다.');
+    }
   }
 
   // 새로 고침
@@ -99,77 +45,101 @@ class _DiaryState extends State<Diary> {
     });
   }
 
+  // 일기(이미지) 선택
+  void _handleImageTap(String diaryId, BuildContext context) {
+    print(diaryId);
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => ViewDiaryPage(diaryId: diaryId),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       body: SafeArea(
-        child: RefreshIndicator(
+          child: RefreshIndicator(
         onRefresh: _refreshDiaries,
-          child: FutureBuilder<List<Map<String, dynamic>>>(
-            future: _futureDiaries,
-            builder: (context, snapshot) {
-              if (snapshot.hasData) {
-                final diaries = snapshot.data!;
-                return ListView.builder(
-                  itemCount: diaries.length,
-                  itemBuilder: (context, index) {
-                    return Column(
-                      crossAxisAlignment: CrossAxisAlignment.center,
-                      children: [
-                        Padding(
-                          padding: const EdgeInsets.only(top: 10, bottom: 15),
-                          child: Text(
-                            diaries[index]['year_month'],
-                            style: const TextStyle(
-                              fontSize: 16,
-                              color: Colors.black54,
-                              fontWeight: FontWeight.bold,
-                            ),
+        child: FutureBuilder<List<Map<String, dynamic>>>(
+          future: _futureDiaries,
+          builder: (context, snapshot) {
+            if (snapshot.hasData && snapshot.data!.isNotEmpty) {
+              final diaries = snapshot.data!;
+              return ListView.builder(
+                itemCount: diaries.length,
+                itemBuilder: (context, index) {
+                  return Column(
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      Padding(
+                        padding: const EdgeInsets.only(top: 10, bottom: 15),
+                        child: Text(
+                          diaries[index]['year_month'],
+                          style: const TextStyle(
+                            fontSize: 16,
+                            color: Colors.black54,
+                            fontWeight: FontWeight.bold,
                           ),
                         ),
-                        GridView.builder(
-                          shrinkWrap: true,
-                          physics: const NeverScrollableScrollPhysics(),
-                          padding: const EdgeInsets.all(5),
-                          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                            crossAxisCount: 3,
-                            crossAxisSpacing: 5,
-                            mainAxisSpacing: 5,
-                          ),
-                          itemCount: diaries[index]['diaries'].length,
-                          itemBuilder: (context, index2) {
-                            return ClipRRect(
+                      ),
+                      GridView.builder(
+                        shrinkWrap: true,
+                        physics: const NeverScrollableScrollPhysics(),
+                        padding: const EdgeInsets.all(5),
+                        gridDelegate:
+                            const SliverGridDelegateWithFixedCrossAxisCount(
+                          crossAxisCount: 3,
+                          crossAxisSpacing: 5,
+                          mainAxisSpacing: 5,
+                        ),
+                        itemCount: diaries[index]['diaries'].length,
+                        itemBuilder: (context, index2) {
+                          return GestureDetector(
+                            onTap: () => _handleImageTap(diaries[index]['diaries'][index2]['diary_id'], context),
+                            child: ClipRRect(
                               borderRadius: BorderRadius.circular(5),
-                              child: Image.network(
-                                diaries[index]['diaries'][index2]['image'],
-                                fit: BoxFit.cover,
-                              ),
-                            );
-                          },
+                              child: diaries[index]['diaries'][index2]
+                                          ['image_url'] ==
+                                      null
+                                  ? Image.asset('images/logo_v2.png',
+                                      fit: BoxFit.cover)
+                                  : Image.network(
+                                      diaries[index]['diaries'][index2]
+                                          ['image_url'],
+                                      fit: BoxFit.cover,
+                                    ),
+                            ),
+                          );
+                        },
+                      ),
+                      if (index < diaries.length - 1) // 구분선
+                        const Divider(
+                          color: Colors.black12,
+                          thickness: 1,
+                          height: 20,
                         ),
-                        if (index < diaries.length - 1) // 구분선
-                          const Divider(
-                            color: Colors.black12,
-                            thickness: 1,
-                            height: 20,
-                          ),
-                      ],
-                    );
-                  },
-                );
-              } else if (snapshot.hasError) {
-                return Center(
-                  child: Text('Error: ${snapshot.error}'),
-                );
-              } else {
-                return const Center(
-                  child: CircularProgressIndicator(),
-                );
-              }
-            },
-          ),
-        )
-      ),
+                    ],
+                  );
+                },
+              );
+            } else if (snapshot.hasData && snapshot.data!.isEmpty) {
+              return Center(
+                child: Image.asset('images/no_diary_img.png'),
+              );
+            } else if (snapshot.hasError) {
+              return Center(
+                child: Text('Error: ${snapshot.error}'),
+              );
+            } else {
+              return const Center(
+                child: CircularProgressIndicator(),
+              );
+            }
+          },
+        ),
+      )),
     );
   }
 }

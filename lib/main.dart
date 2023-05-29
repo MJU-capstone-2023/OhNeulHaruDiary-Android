@@ -1,23 +1,37 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:sketch_day/screens/login/login_page.dart';
 import 'package:sketch_day/screens/main/main_page.dart';
-import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:sketch_day/utils/authService.dart';
 
 Future main() async {
-  await dotenv.load(); // Add this line
-  runApp(MyApp());
+  await dotenv.load();
+  WidgetsFlutterBinding.ensureInitialized();
+
+  final authService = AuthService();
+  final accessToken = await authService.readAccessToken();
+  final refreshToken = await authService.readRefreshToken();
+
+  if (accessToken == null && refreshToken != null) {
+    final newAccessToken = await authService.refreshTokenToAccessToken(refreshToken);
+    if (newAccessToken != null) {
+      await authService.saveTokens(newAccessToken, refreshToken);
+    }
+  }
+
+  runApp(MyApp(authService: authService));
 }
 
 class MyApp extends StatelessWidget {
+  final AuthService authService;
+
+  MyApp({Key? key, required this.authService}) : super(key: key);
+
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'My App',
-      initialRoute: '/',
-      routes: {
-        '/': (context) => LoginPage(),
-        '/main': (context) => const MainPage(),
-      },
+      home: authService.readAccessToken() != null ? const MainPage() : LoginPage(),
       theme: ThemeData(
         colorScheme: const ColorScheme(
           primary: Color(0xFF093879),

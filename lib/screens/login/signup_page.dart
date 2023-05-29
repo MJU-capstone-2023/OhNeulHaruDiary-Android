@@ -110,7 +110,7 @@ class _SignUpPageState extends State<SignUpPage> {
   // POST: 회원가입
   Future<void> _handleSignup() async {
     final response = await http.post(
-      Uri.parse('${dotenv.env['BASE_URL']}!}/auth/signup'),
+      Uri.parse('${dotenv.env['BASE_URL']}/auth/signup'),
       body: {
         'email': _emailController.text,
         'password': _passwordController.text,
