@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:http/http.dart' as http;
 
@@ -29,7 +30,7 @@ class AuthService {
   // 액세스 토큰 재발급
   Future<String?> refreshTokenToAccessToken(String refreshToken) async {
     final refreshUrl =
-        Uri.parse('http://15.165.111.191:8001/auth/token/refresh');
+        Uri.parse('${dotenv.env['BASE_URL']}/auth/token/refresh');
     final response =
         await http.post(refreshUrl, body: {'refresh_token': refreshToken});
 
@@ -71,18 +72,25 @@ class AuthService {
       required String method}) async {
     headers ??= {};
     headers['Authorization'] = 'Bearer $accessToken';
+    headers['Content-Type'] = 'application/json';
 
     http.Response response;
     Uri uri = Uri.parse(url);
+
+    String? bodyJson;
+    if (body != null) {
+      bodyJson = jsonEncode(body);
+    }
+
     switch (method.toUpperCase()) {
       case 'GET':
         response = await http.get(uri, headers: headers);
         break;
       case 'POST':
-        response = await http.post(uri, headers: headers, body: body);
+        response = await http.post(uri, headers: headers, body: bodyJson);
         break;
       case 'PATCH':
-        response = await http.patch(uri, headers: headers, body: body);
+        response = await http.patch(uri, headers: headers, body: bodyJson);
         break;
       case 'DELETE':
         response = await http.delete(uri, headers: headers);
