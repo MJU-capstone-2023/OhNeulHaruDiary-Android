@@ -1,8 +1,6 @@
 import 'dart:convert';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
-
 import '../../utils/authService.dart';
 import 'create_post/view_diary_page.dart';
 
@@ -21,10 +19,10 @@ class _DiaryState extends State<Diary> {
     _futureDiaries = _fetchDiaries();
   }
 
+  // 전체 일기 조회
   Future<List<Map<String, dynamic>>> _fetchDiaries() async {
     final url = '${dotenv.env['BASE_URL']}/diary/lists';
-    final accessToken = await _authService.readAccessToken() ??
-        ''; // 액세스 토큰이 null인 경우 빈 문자열로 설정
+    final accessToken = await _authService.readAccessToken() ?? '';
     final response = await _authService.get(url, accessToken);
 
     if (response.statusCode == 200) {
@@ -45,6 +43,17 @@ class _DiaryState extends State<Diary> {
     setState(() {
       _futureDiaries = _fetchDiaries();
     });
+  }
+
+  // 일기(이미지) 선택
+  void _handleImageTap(String diaryId, BuildContext context) {
+    print(diaryId);
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => ViewDiaryPage(diaryId: diaryId),
+      ),
+    );
   }
 
   @override
@@ -88,16 +97,7 @@ class _DiaryState extends State<Diary> {
                         itemCount: diaries[index]['diaries'].length,
                         itemBuilder: (context, index2) {
                           return GestureDetector(
-                            onTap: () {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) => ViewDiaryPage(
-                                      diaryId: diaries[index]['diaries'][index2]
-                                          ['diary_id']),
-                                ),
-                              );
-                            },
+                            onTap: () => _handleImageTap(diaries[index]['diaries'][index2]['diary_id'], context),
                             child: ClipRRect(
                               borderRadius: BorderRadius.circular(5),
                               child: diaries[index]['diaries'][index2]
