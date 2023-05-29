@@ -42,21 +42,63 @@ class AuthService {
   }
 
   // 액세스 토큰을 사용하여 인증된 API 호출을 수행
-  Future<http.Response> authorizedApiCall(String url, String accessToken,
+  Future<http.Response> get(String url, String accessToken,
       {Map<String, String>? headers}) async {
+    return authorizedApiCall(url, accessToken, method: 'GET', headers: headers);
+  }
+
+  Future<http.Response> post(String url, String accessToken,
+      {Map<String, String>? headers, Map<String, dynamic>? body}) async {
+    return authorizedApiCall(url, accessToken,
+        method: 'POST', headers: headers, body: body);
+  }
+
+  Future<http.Response> patch(String url, String accessToken,
+      {Map<String, String>? headers, Map<String, dynamic>? body}) async {
+    return authorizedApiCall(url, accessToken,
+        method: 'PATCH', headers: headers, body: body);
+  }
+
+  Future<http.Response> delete(String url, String accessToken,
+      {Map<String, String>? headers}) async {
+    return authorizedApiCall(url, accessToken,
+        method: 'DELETE', headers: headers);
+  }
+
+  Future<http.Response> authorizedApiCall(String url, String accessToken,
+      {Map<String, String>? headers,
+      Map<String, dynamic>? body,
+      required String method}) async {
     headers ??= {};
     headers['Authorization'] = 'Bearer $accessToken';
-    final response = await http.get(Uri.parse(url), headers: headers);
 
-    // 리프레시 토큰을 사용하여 새로운 액세스 토큰을 갱신하고 다시 호출
+    http.Response response;
+    Uri uri = Uri.parse(url);
+    switch (method.toUpperCase()) {
+      case 'GET':
+        response = await http.get(uri, headers: headers);
+        break;
+      case 'POST':
+        response = await http.post(uri, headers: headers, body: body);
+        break;
+      case 'PATCH':
+        response = await http.patch(uri, headers: headers, body: body);
+        break;
+      case 'DELETE':
+        response = await http.delete(uri, headers: headers);
+        break;
+      default:
+        throw Exception('Unsupported HTTP method: $method');
+    }
+
     if (response.statusCode == 401) {
       final refreshToken = await readRefreshToken();
       if (refreshToken != null) {
         final newAccessToken = await refreshTokenToAccessToken(refreshToken);
         if (newAccessToken != null) {
           headers['Authorization'] = 'Bearer $newAccessToken';
-          final newResponse = await http.get(Uri.parse(url), headers: headers);
-          return newResponse;
+          return authorizedApiCall(url, newAccessToken,
+              headers: headers, body: body, method: method);
         }
       }
     }
