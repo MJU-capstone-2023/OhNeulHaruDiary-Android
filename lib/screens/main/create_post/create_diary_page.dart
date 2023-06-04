@@ -1,25 +1,56 @@
-import 'package:flutter/cupertino.dart';
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 import '../../../utils/authService.dart';
+import '../main_page.dart';
 
 class CreateDiaryPage extends StatefulWidget {
   final String date;
   final String content;
 
-  const CreateDiaryPage({Key? key, required this.date, required this.content}) : super(key: key);
+  const CreateDiaryPage({Key? key, required this.date, required this.content})
+      : super(key: key);
 
   @override
   _CreateDiaryPageState createState() => _CreateDiaryPageState();
 }
 
 class _CreateDiaryPageState extends State<CreateDiaryPage> {
-  Future<Map<String, dynamic>>? _diary;
+  final TextEditingController _textEditingController = TextEditingController();
   final _authService = AuthService();
 
   @override
   void initState() {
     super.initState();
+  }
+
+  Future<void> saveDiary() async {
+    final content = _textEditingController.text; // 일기 내용
+    final url = '${dotenv.env['BASE_URL']}/diary/create';
+    final accessToken = await _authService.readAccessToken() ?? '';
+    final response = await _authService.post(
+      url,
+      accessToken,
+      body: {
+        'date': widget.date,
+        'content': content,
+        'emo_id': "1",
+        'wea_id': "1"
+      },
+    );
+
+    if (response.statusCode == 200) {
+      Navigator.pushAndRemoveUntil(
+        context,
+        MaterialPageRoute(builder: (context) => MainPage()),
+        (route) => route == null,
+      );
+    } else {
+      print(utf8.decode(response.bodyBytes));
+      throw Exception('일기 저장에 실패했습니다.');
+    }
   }
 
   @override
@@ -72,6 +103,7 @@ class _CreateDiaryPageState extends State<CreateDiaryPage> {
           Padding(
             padding: const EdgeInsets.all(16.0),
             child: TextFormField(
+              controller: _textEditingController,
               initialValue: widget.content,
               decoration: const InputDecoration(
                 border: OutlineInputBorder(),
@@ -82,7 +114,7 @@ class _CreateDiaryPageState extends State<CreateDiaryPage> {
           ),
           ElevatedButton(
             onPressed: () {
-              // TODO: 저장 버튼 눌렸을 때의 동작 구현
+              saveDiary();
             },
             child: const Text('저장'),
           ),
