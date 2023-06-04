@@ -3,10 +3,14 @@ import 'dart:io';
 
 import 'package:async/async.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:fluttertoast/fluttertoast.dart';
 import 'package:http/http.dart' as http;
 import 'package:image_picker/image_picker.dart';
 import 'package:path/path.dart' as p;
-import 'package:flutter_dotenv/flutter_dotenv.dart';
+
+import '../../../utils/authService.dart';
+import 'create_diary_page.dart';
 
 class UploadPhotoPage extends StatefulWidget {
   @override
@@ -15,7 +19,69 @@ class UploadPhotoPage extends StatefulWidget {
 
 class _WritePageState extends State<UploadPhotoPage> {
   DateTime selectedDate = DateTime.now();
+  String summary = '';
+  final _authService = AuthService();
   List<XFile> images = []; // 선택된 이미지를 저장하는 리스트
+
+  Future<void> showDeleteDialog(int index) async {
+    bool? confirmed = await showDialog<bool>(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('경고'),
+          content: const Text('삭제하시겠습니까?'),
+          actions: <Widget>[
+            TextButton(
+              child: const Text('아니요'),
+              onPressed: () {
+                Navigator.of(context).pop(false);
+              },
+            ),
+            TextButton(
+              child: const Text('예'),
+              onPressed: () {
+                Navigator.of(context).pop(true);
+              },
+            ),
+          ],
+        );
+      },
+    );
+
+    if (confirmed == true) {
+      setState(() {
+        images.removeAt(index);
+      });
+    }
+  }
+
+  Widget buildImage(File image, int index) {
+    return Stack(
+      children: [
+        AspectRatio(
+          aspectRatio: 1,
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(5.0),
+            child: Image.file(
+              image,
+              fit: BoxFit.cover,
+            ),
+          ),
+        ),
+        Positioned(
+          top: 4,
+          right: 4,
+          child: InkWell(
+            onTap: () => showDeleteDialog(index),
+            child: const Icon(
+              Icons.remove_circle,
+              color: Colors.white,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
 
   void showDatePickerDialog() async {
     final DateTime? pickedDate = await showDatePicker(
@@ -52,14 +118,15 @@ class _WritePageState extends State<UploadPhotoPage> {
   }
 
   Future<String> getUploadUrl(String imageName) async {
-    final response = await http.put(
-      Uri.parse('${dotenv.env['BASE_URL']}/diary/getS3Url'),
-    );
+    final url = '${dotenv.env['BASE_URL']}/diary/getS3Url';
+    final accessToken = await _authService.readAccessToken() ?? '';
+    final response = await _authService.put(url, accessToken);
 
     if (response.statusCode == 200) {
       var data = json.decode(response.body);
       return data['uploadUrl'];
     } else {
+      Fluttertoast.showToast(msg: "이미지 업로드 URL 통신에 실패했습니다.");
       throw Exception('이미지 업로드에 실패했습니다.');
     }
   }
@@ -80,9 +147,21 @@ class _WritePageState extends State<UploadPhotoPage> {
     var response = await request.send();
 
     if (response.statusCode == 200) {
-      print("Image Uploaded");
+      summary = response.toString(); // TODO: 서버 응답값에 따라 변경
+      print(summary);
+      Future.delayed(Duration.zero, () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (_) => CreateDiaryPage(
+              date: selectedDate.toIso8601String().split('T')[0],
+              content: summary,
+            ),
+          ),
+        );
+      });
     } else {
-      print("Upload Failed");
+      Fluttertoast.showToast(msg: "이미지 업로드에 실패했습니다.");
     }
     response.stream.transform(utf8.decoder).listen((value) {
       print(value);
@@ -166,38 +245,30 @@ class _WritePageState extends State<UploadPhotoPage> {
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Padding(
-                padding: const EdgeInsets.symmetric(vertical: 20.0),
-                child: images.isEmpty
-                    ? Container(
-                        padding: const EdgeInsets.all(10.0),
-                        decoration: BoxDecoration(
-                          border: Border.all(color: Colors.grey),
-                          borderRadius: BorderRadius.circular(5.0),
+                padding: const EdgeInsets.symmetric(
+                    vertical: 20.0, horizontal: 20.0),
+                child: Container(
+                  padding: const EdgeInsets.all(4),
+                  decoration: BoxDecoration(
+                    border: Border.all(color: Colors.grey),
+                    borderRadius: BorderRadius.circular(5.0),
+                  ),
+                  height: 400,
+                  child: images.isEmpty
+                      ? Image.asset(
+                          'images/no_messenger_img.png',
+                          fit: BoxFit.cover,
+                        )
+                      : GridView.count(
+                          padding: EdgeInsets.zero,
+                          crossAxisCount: 3,
+                          crossAxisSpacing: 4,
+                          mainAxisSpacing: 4,
+                          children: List.generate(images.length, (index) {
+                            return buildImage(File(images[index].path), index);
+                          }),
                         ),
-                        child: const Text.rich(
-                          TextSpan(
-                            text: '추가된 사진이 없어요!\n',
-                            children: <TextSpan>[
-                              TextSpan(text: '메신저 대화 사진을 업로드하면\n'),
-                              TextSpan(text: '대신 일기를 써드려요'),
-                            ],
-                          ),
-                          textAlign: TextAlign.center,
-                          style: TextStyle(fontSize: 16.0),
-                        ),
-                      )
-                    : Wrap(
-                        spacing: 8.0,
-                        runSpacing: 4.0,
-                        children: images.map((image) {
-                          return Image.file(
-                            File(image.path),
-                            width: 100,
-                            height: 100,
-                            fit: BoxFit.cover,
-                          );
-                        }).toList(),
-                      ),
+                ),
               ),
               ElevatedButton(
                 onPressed: getImage,

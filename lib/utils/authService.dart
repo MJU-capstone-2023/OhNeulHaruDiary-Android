@@ -71,6 +71,12 @@ class AuthService {
         method: 'DELETE', headers: headers);
   }
 
+  Future<http.Response> put(String url, String accessToken,
+      {Map<String, String>? headers}) async {
+    return authorizedApiCall(url, accessToken,
+        method: 'PUT', headers: headers);
+  }
+
   Future<http.Response> authorizedApiCall(String url, String accessToken,
       {Map<String, String>? headers,
       Map<String, dynamic>? body,
@@ -99,6 +105,9 @@ class AuthService {
         break;
       case 'DELETE':
         response = await http.delete(uri, headers: headers);
+        break;
+      case 'PUT':
+        response = await http.put(uri, headers: headers);
         break;
       default:
         throw Exception('Unsupported HTTP method: $method');
