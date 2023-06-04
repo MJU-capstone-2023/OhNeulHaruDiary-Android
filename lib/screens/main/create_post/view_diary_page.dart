@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:fluttertoast/fluttertoast.dart';
 import 'package:sketch_day/screens/main/create_post/update_diary_page.dart';
 
 import '../../../utils/authService.dart';
@@ -9,7 +10,6 @@ import '../main_page.dart';
 
 class ViewDiaryPage extends StatefulWidget {
   final String diaryId;
-
   const ViewDiaryPage({Key? key, required this.diaryId}) : super(key: key);
 
   @override
@@ -19,6 +19,22 @@ class ViewDiaryPage extends StatefulWidget {
 class _ViewDiaryPageState extends State<ViewDiaryPage> {
   Future<Map<String, dynamic>>? _diary;
   final _authService = AuthService();
+  String _imageURL = '';
+
+  Future<void> _fetchImageURL() async {
+    final url = '${dotenv.env['BASE_URL']}/diary/createImg?id=${widget.diaryId}';
+    final accessToken = await _authService.readAccessToken() ?? '';
+    final response = await _authService.patch(url, accessToken);
+
+    if (response.statusCode == 200) {
+      setState(() {
+        _imageURL = response.body; // TODO: 받아온 url로 변경 필요
+      });
+    } else {
+      Fluttertoast.showToast(msg: "그림 생성에 실패했습니다.");
+      throw Exception('그림 생성에 실패했습니다.');
+    }
+  }
 
   @override
   void initState() {
@@ -174,6 +190,8 @@ class _ViewDiaryPageState extends State<ViewDiaryPage> {
                     ],
                   ),
                 ),
+                if (_imageURL.isNotEmpty)  // 이미지 URL이 있다면
+                  Image.network(_imageURL),  // 이미지 표시
                 Expanded(
                   child: Padding(
                     padding: const EdgeInsets.symmetric(
@@ -201,6 +219,22 @@ class _ViewDiaryPageState extends State<ViewDiaryPage> {
           }
         },
       ),
+      floatingActionButton: Container(
+        height: 40,
+        width: 120,
+        child: FloatingActionButton.extended(
+          onPressed: _fetchImageURL,
+          label: Text('이미지 생성'),
+          backgroundColor: Colors.grey[300],
+          elevation: 1,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(28.0),
+            side: BorderSide(color: Colors.grey),
+          ),
+        ),
+      ),
+      floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
+
     );
   }
 }
