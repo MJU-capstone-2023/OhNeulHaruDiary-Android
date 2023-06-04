@@ -9,6 +9,9 @@ import 'package:http/http.dart' as http;
 import 'package:image_picker/image_picker.dart';
 import 'package:path/path.dart' as p;
 
+import '../../../utils/authService.dart';
+import 'create_diary_page.dart';
+
 class UploadPhotoPage extends StatefulWidget {
   @override
   _WritePageState createState() => _WritePageState();
@@ -16,6 +19,8 @@ class UploadPhotoPage extends StatefulWidget {
 
 class _WritePageState extends State<UploadPhotoPage> {
   DateTime selectedDate = DateTime.now();
+  String summary = '';
+  final _authService = AuthService();
   List<XFile> images = []; // 선택된 이미지를 저장하는 리스트
 
   Future<void> showDeleteDialog(int index) async {
@@ -65,7 +70,7 @@ class _WritePageState extends State<UploadPhotoPage> {
         ),
         Positioned(
           top: 4,
-          right:4,
+          right: 4,
           child: InkWell(
             onTap: () => showDeleteDialog(index),
             child: const Icon(
@@ -113,15 +118,15 @@ class _WritePageState extends State<UploadPhotoPage> {
   }
 
   Future<String> getUploadUrl(String imageName) async {
-    final response = await http.put(
-      Uri.parse('${dotenv.env['BASE_URL']}/diary/getS3Url'),
-    );
+    final url = '${dotenv.env['BASE_URL']}/diary/getS3Url';
+    final accessToken = await _authService.readAccessToken() ?? '';
+    final response = await _authService.put(url, accessToken);
 
     if (response.statusCode == 200) {
       var data = json.decode(response.body);
       return data['uploadUrl'];
     } else {
-      Fluttertoast.showToast(msg: "이미지 업로드에 실패했습니다.");
+      Fluttertoast.showToast(msg: "이미지 업로드 URL 통신에 실패했습니다.");
       throw Exception('이미지 업로드에 실패했습니다.');
     }
   }
@@ -142,9 +147,21 @@ class _WritePageState extends State<UploadPhotoPage> {
     var response = await request.send();
 
     if (response.statusCode == 200) {
-      print("Image Uploaded");
+      summary = response.toString(); // TODO: 서버 응답값에 따라 변경
+      print(summary);
+      Future.delayed(Duration.zero, () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (_) => CreateDiaryPage(
+              date: selectedDate.toIso8601String().split('T')[0],
+              content: summary,
+            ),
+          ),
+        );
+      });
     } else {
-      print("Upload Failed");
+      Fluttertoast.showToast(msg: "이미지 업로드에 실패했습니다.");
     }
     response.stream.transform(utf8.decoder).listen((value) {
       print(value);
