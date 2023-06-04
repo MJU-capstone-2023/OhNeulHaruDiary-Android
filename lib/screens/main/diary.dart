@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import '../../utils/authService.dart';
+import '../login/login_page.dart';
 import 'create_post/view_diary_page.dart';
 
 class Diary extends StatefulWidget {
@@ -124,11 +125,22 @@ class _DiaryState extends State<Diary> {
                   );
                 },
               );
-            } else if (snapshot.hasData && snapshot.data!.isEmpty) {
+            } else if (snapshot.hasData && snapshot.data!.isEmpty) { // 사진이 없을 경우
               return Center(
                 child: Image.asset('images/no_diary_img.png'),
               );
-            } else if (snapshot.hasError) {
+            } else if (snapshot.hasError) { // 토큰이 만료됐을 경우: 로그인  페이지로 이동
+              if (snapshot.error is UnauthenticatedException) {
+                WidgetsBinding.instance?.addPostFrameCallback((_) {
+                  Navigator.pushReplacement(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => LoginPage(),
+                    ),
+                  );
+                });
+                return Container();
+              }
               return Center(
                 child: Text('Error: ${snapshot.error}'),
               );

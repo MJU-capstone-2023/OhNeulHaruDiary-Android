@@ -80,20 +80,7 @@ class _LoginPageState extends State<LoginPage> {
       resizeToAvoidBottomInset: false,
       body: Column(
         children: [
-          const SizedBox(height: 20),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 20),
-            child: OutlinedButton(
-              onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => const MainPage()),
-                );
-              },
-              child: const Text('로그인 없이 진입'),
-            ),
-          ),
-          const SizedBox(height: 40),
+          const SizedBox(height: 100),
           SizedBox(
             height: 200,
             child: Image.asset('images/logo_v2.png'), // 로고 이미지 경로

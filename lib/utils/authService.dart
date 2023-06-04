@@ -4,6 +4,11 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:http/http.dart' as http;
 
+class UnauthenticatedException implements Exception {
+  final String message;
+  UnauthenticatedException(this.message);
+}
+
 class AuthService {
   final _storage = new FlutterSecureStorage();
 
@@ -109,6 +114,7 @@ class AuthService {
               headers: headers, body: body, method: method);
         }
       }
+      throw UnauthenticatedException('No refresh token available'); // 리프레시 토큰이 없을 때
     }
 
     return response;
