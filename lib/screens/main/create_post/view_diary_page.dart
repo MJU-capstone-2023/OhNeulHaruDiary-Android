@@ -219,7 +219,8 @@ class _ViewDiaryPageState extends State<ViewDiaryPage> {
           }
         },
       ),
-      floatingActionButton: Container(
+      floatingActionButton: _imageURL.isEmpty ? // 버튼 표시: 이미지 URL이 비어있는 경우
+      Container(
         height: 40,
         width: 120,
         child: FloatingActionButton.extended(
@@ -232,9 +233,8 @@ class _ViewDiaryPageState extends State<ViewDiaryPage> {
             side: BorderSide(color: Colors.grey),
           ),
         ),
-      ),
+      ) : null, // 이미지 URL이 존재하는 경우
       floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
-
     );
   }
 }
