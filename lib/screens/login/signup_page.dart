@@ -1,4 +1,5 @@
-import 'dart:math';
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:fluttertoast/fluttertoast.dart';
@@ -30,13 +31,31 @@ class _SignUpPageState extends State<SignUpPage> {
   bool _isConfirmPasswordValid = true;
   String _confirmPasswordWarning = "";
 
+  @override
+  void initState() {
+    super.initState();
+
+    _emailController.addListener(() {
+      setState(() {
+        _verificationCodeDisabled = false;
+        _emailVerificationDisabled = false;
+      });
+    });
+  }
+
+  @override
+  void dispose() {
+    _emailController.dispose();
+    super.dispose();
+  }
+
   // 비밀번호 유효성 검사
   void _validatePassword(String value) {
     final RegExp passwordRegExp = RegExp(r'^(?=.*[a-z])(?=.*\d)[a-z\d]{8,16}$');
     if (!passwordRegExp.hasMatch(value)) {
       setState(() {
         _isPasswordValid = false;
-        _passwordWarning = "비밀번호는 영어 소문자와 숫자 조합으로 8~16자 사이여야 합니다.";
+        _passwordWarning = "영어 소문자, 숫자 조합으로 8~16자 사이여야 합니다.";
       });
     } else {
       setState(() {
@@ -63,6 +82,7 @@ class _SignUpPageState extends State<SignUpPage> {
 
   // POST: 인증번호 전송
   Future<void> _sendEmailVerification() async {
+    print(_emailController.text.toString());
     if (!RegExp(r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$")
         .hasMatch(_emailController.text)) {
       Fluttertoast.showToast(msg: "이메일 형식이 아닙니다.");
@@ -70,18 +90,24 @@ class _SignUpPageState extends State<SignUpPage> {
     }
 
     final response = await http.post(
-      Uri.parse('${dotenv.env['BASE_URL']}!}/auth/sendEmail'),
-      body: {
-        'email': _emailController.text,
+      Uri.parse('${dotenv.env['BASE_URL']}/auth/sendEmail'),
+      headers: <String, String>{
+        'Content-Type': 'application/json; charset=UTF-8',
       },
+      body: jsonEncode({
+        'email': _emailController.text,
+      }),
     );
 
     if (response.statusCode == 200) {
+      Fluttertoast.showToast(msg: "인증번호를 발송하였습니다.");
       setState(() {
         _emailVerificationVisible = true;
         _emailVerificationDisabled = true;
       });
     } else {
+      Fluttertoast.showToast(msg: "인증번호 발송에 실패하였습니다.");
+      print(response.body);
       setState(() {
         _emailVerificationVisible = false;
       });
@@ -90,15 +116,20 @@ class _SignUpPageState extends State<SignUpPage> {
 
   // POST: 인증번호 검증
   Future<void> _verifyVerificationCode() async {
+    print("${_emailController.text.toString()}, ${_verificationCodeController.text.toString()}");
     final response = await http.post(
-      Uri.parse('${dotenv.env['BASE_URL']}!}/auth/verifyEmail'),
-      body: {
+      Uri.parse('${dotenv.env['BASE_URL']}/auth/verifyEmail'),
+      headers: <String, String>{
+        'Content-Type': 'application/json; charset=UTF-8',
+      },
+      body: jsonEncode({
         'email': _emailController.text,
         'verification_code': _verificationCodeController.text,
-      },
+      }),
     );
 
     if (response.statusCode == 200) {
+      Fluttertoast.showToast(msg: "이메일 인증이 완료 되었습니다.");
       setState(() {
         _verificationCodeDisabled = true;
       });
@@ -115,7 +146,7 @@ class _SignUpPageState extends State<SignUpPage> {
         'email': _emailController.text,
         'password': _passwordController.text,
         'birth': _birthDateController.text,
-        'name': _nameController,
+        'name': _nameController.text,
       },
     );
 
@@ -209,8 +240,7 @@ class _SignUpPageState extends State<SignUpPage> {
                       onPressed: _emailVerificationDisabled
                           ? null
                           : () {
-                              // _sendEmailVerification();
-                              _emailVerificationVisible = true; // test
+                              _sendEmailVerification();
                               FocusScope.of(context).unfocus();
                             },
                       child: const Text('인증'),
@@ -238,23 +268,15 @@ class _SignUpPageState extends State<SignUpPage> {
                         onPressed: _verificationCodeDisabled
                             ? null
                             : () {
-                            // _verifyVerificationCode();
-                            Future.delayed(const Duration(seconds: 1), () {
-                              Fluttertoast.showToast(
-                                  msg: "인증 완료 되었습니다.");
-                              setState(() {
-                                _verificationCodeDisabled = true;
-                              });
-                            FocusScope.of(context).unfocus();
-                          });
-                        },
+                                _verifyVerificationCode();
+                              },
                         child: const Text('확인'),
                       ),
                     ),
                   ],
                 ),
               ),
-            if(_verificationCodeDisabled)
+            if (_verificationCodeDisabled)
               const Padding(
                 padding: EdgeInsets.only(left: 45),
                 child: Align(
@@ -308,7 +330,8 @@ class _SignUpPageState extends State<SignUpPage> {
                       ? Icons.visibility
                       : Icons.visibility_off),
                 ),
-                errorText: _isConfirmPasswordValid ? null : _confirmPasswordWarning,
+                errorText:
+                    _isConfirmPasswordValid ? null : _confirmPasswordWarning,
               ),
             ),
             const SizedBox(height: 18),
@@ -342,20 +365,6 @@ class _SignUpPageState extends State<SignUpPage> {
               ),
             ),
             const SizedBox(height: 4),
-            Padding(
-              padding: const EdgeInsets.only(left: 18),
-              child: CheckboxListTile(
-                controlAffinity: ListTileControlAffinity.leading,
-                value: _agreedToTerms,
-                onChanged: (bool? value) {
-                  setState(() {
-                    _agreedToTerms = value!;
-                  });
-                  Fluttertoast.showToast(msg: "$_verificationCodeDisabled, $_isPasswordValid, $_isConfirmPasswordValid");
-                },
-                title: const Text('서비스 약관 동의'),
-              ),
-            ),
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 50, vertical: 40),
               child: ElevatedButton(
