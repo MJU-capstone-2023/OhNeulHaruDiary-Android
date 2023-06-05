@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:sketch_day/screens/main/create_post/upload_photo_page.dart';
-import 'package:sketch_day/screens/main/diary.dart';
-import 'package:sketch_day/screens/main/mypage.dart';
+import 'package:sketch_day/screens/main/user_diary/diary.dart';
+import 'package:sketch_day/screens/main/user_page/mypage.dart';
 
 import '../../widgets/bottom_navigation_bar.dart';
 import '../../widgets/floating_action_button.dart';

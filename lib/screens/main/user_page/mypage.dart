@@ -4,8 +4,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 
-import '../../utils/authService.dart';
-import '../login/login_page.dart';
+import '../../../utils/authService.dart';
+import '../../login/login_page.dart';
 
 class Mypage extends StatefulWidget {
   Mypage({Key? key}) : super(key: key);
