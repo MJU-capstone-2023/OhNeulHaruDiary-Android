@@ -10,6 +10,7 @@ import '../main_page.dart';
 
 class ViewDiaryPage extends StatefulWidget {
   final String diaryId;
+
   const ViewDiaryPage({Key? key, required this.diaryId}) : super(key: key);
 
   @override
@@ -22,13 +23,15 @@ class _ViewDiaryPageState extends State<ViewDiaryPage> {
   String _imageURL = '';
 
   Future<void> _fetchImageURL() async {
-    final url = '${dotenv.env['BASE_URL']}/diary/createImg?id=${widget.diaryId}';
+    final url =
+        '${dotenv.env['BASE_URL']}/diary/createImg?id=${widget.diaryId}';
     final accessToken = await _authService.readAccessToken() ?? '';
     final response = await _authService.patch(url, accessToken);
 
     if (response.statusCode == 200) {
+      final responseJson = jsonDecode(utf8.decode(response.bodyBytes));
       setState(() {
-        _imageURL = response.body; // TODO: 받아온 url로 변경 필요
+        _imageURL = responseJson['url'];
       });
     } else {
       Fluttertoast.showToast(msg: "그림 생성에 실패했습니다.");
@@ -190,8 +193,8 @@ class _ViewDiaryPageState extends State<ViewDiaryPage> {
                     ],
                   ),
                 ),
-                if (_imageURL.isNotEmpty)  // 이미지 URL이 있다면
-                  Image.network(_imageURL),  // 이미지 표시
+                if (_imageURL.isNotEmpty) // 이미지 URL이 있다면
+                  Image.network(_imageURL), // 이미지 표시
                 Expanded(
                   child: Padding(
                     padding: const EdgeInsets.symmetric(
@@ -219,21 +222,23 @@ class _ViewDiaryPageState extends State<ViewDiaryPage> {
           }
         },
       ),
-      floatingActionButton: _imageURL.isEmpty ? // 버튼 표시: 이미지 URL이 비어있는 경우
-      Container(
-        height: 40,
-        width: 120,
-        child: FloatingActionButton.extended(
-          onPressed: _fetchImageURL,
-          label: Text('이미지 생성'),
-          backgroundColor: Colors.grey[300],
-          elevation: 1,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(28.0),
-            side: BorderSide(color: Colors.grey),
-          ),
-        ),
-      ) : null, // 이미지 URL이 존재하는 경우
+      floatingActionButton: _imageURL.isEmpty
+          ? // 버튼 표시: 이미지 URL이 비어있는 경우
+          Container(
+              height: 40,
+              width: 120,
+              child: FloatingActionButton.extended(
+                onPressed: _fetchImageURL,
+                label: Text('이미지 생성'),
+                backgroundColor: Colors.grey[300],
+                elevation: 1,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(28.0),
+                  side: BorderSide(color: Colors.grey),
+                ),
+              ),
+            )
+          : null, // 이미지 URL이 존재하는 경우
       floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
     );
   }
