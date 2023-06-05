@@ -54,6 +54,11 @@ class _ViewDiaryPageState extends State<ViewDiaryPage> {
       final responseJson = jsonDecode(utf8.decode(response.bodyBytes));
       final diary = responseJson['res'][0];
       print(diary);
+      if (diary['image_url'] != null) {
+        setState(() {
+          _imageURL = diary['image_url'];
+        });
+      }
       return diary;
     } else {
       throw Exception('다이어리 상세 조회에 실패했습니다.');
