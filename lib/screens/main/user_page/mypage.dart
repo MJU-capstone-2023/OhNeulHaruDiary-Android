@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:fluttertoast/fluttertoast.dart';
+import 'package:sketch_day/screens/main/user_page/update_password_page.dart';
 
 import '../../../utils/authService.dart';
 import '../../login/login_page.dart';
@@ -160,13 +161,13 @@ class _MypageState extends State<Mypage> {
                 ),
                 const Divider(),
                 GestureDetector(
-                  // onTap: () {
-                  //   Navigator.push(
-                  //     context,
-                  //     MaterialPageRoute(
-                  //         builder: (context) => PasswordChangePage()),
-                  //   );
-                  // },
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                          builder: (context) => UpdatePasswordPage()),
+                    );
+                  },
                   child: const Padding(
                     padding:
                         EdgeInsets.symmetric(vertical: 10.0, horizontal: 20.0),
