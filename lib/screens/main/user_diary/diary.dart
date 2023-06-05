@@ -1,9 +1,9 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
-import '../../utils/authService.dart';
-import '../login/login_page.dart';
-import 'create_post/view_diary_page.dart';
+import '../../../utils/authService.dart';
+import '../../login/login_page.dart';
+import '../create_post/view_diary_page.dart';
 
 class Diary extends StatefulWidget {
   @override
