@@ -105,8 +105,8 @@ class _WritePageState extends State<UploadPhotoPage> {
 
     setState(() {
       images.addAll(pickedImages);
-      if (images.length > 10) {
-        images = images.sublist(0, 10); // 이미지가 10장이 넘지 않도록 제한
+      if (images.length > 1) {
+        images = images.sublist(0, 1); // 이미지가 1장이 넘지 않도록 제한 -> 추후 10장까지
       }
     });
   }
@@ -139,7 +139,7 @@ class _WritePageState extends State<UploadPhotoPage> {
 
       if (response.statusCode == 200) {
         print('S3 이미지 업로드 성공');
-        getSummary(imagePaths);
+        // getSummary(imagePaths); // TODO !!
       } else {
         Fluttertoast.showToast(msg: "이미지 업로드에 실패했습니다.");
         return;
@@ -190,7 +190,7 @@ class _WritePageState extends State<UploadPhotoPage> {
     if (response.statusCode == 200) {
       var data = json.decode(response.body);
       print(data);
-      return List<String>.from(data['s3_urls']); // url 리스트를 반환
+      return List<String>.from(data['s3_url']); // url 리스트를 반환
     } else {
       Fluttertoast.showToast(msg: "이미지 업로드 URL 통신에 실패했습니다.");
       throw Exception('이미지 업로드에 실패했습니다.');
@@ -217,7 +217,7 @@ class _WritePageState extends State<UploadPhotoPage> {
                   onPressed: () {
                     if (images.isEmpty) {
                       Fluttertoast.showToast(
-                        msg: "이미지를 한 장 이상 선택해주세요.",
+                        msg: "이미지를 선택해주세요.",
                         toastLength: Toast.LENGTH_SHORT,
                         gravity: ToastGravity.CENTER,
                       );
