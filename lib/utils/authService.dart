@@ -6,6 +6,7 @@ import 'package:http/http.dart' as http;
 
 class UnauthenticatedException implements Exception {
   final String message;
+
   UnauthenticatedException(this.message);
 }
 
@@ -72,9 +73,9 @@ class AuthService {
   }
 
   Future<http.Response> put(String url, String accessToken,
-      {Map<String, String>? headers}) async {
+      {Map<String, String>? headers, Map<String, dynamic>? body}) async {
     return authorizedApiCall(url, accessToken,
-        method: 'PUT', headers: headers);
+        method: 'PUT', headers: headers, body: body);
   }
 
   Future<http.Response> authorizedApiCall(String url, String accessToken,
@@ -107,7 +108,7 @@ class AuthService {
         response = await http.delete(uri, headers: headers);
         break;
       case 'PUT':
-        response = await http.put(uri, headers: headers);
+        response = await http.put(uri, headers: headers, body: bodyJson);
         break;
       default:
         throw Exception('Unsupported HTTP method: $method');
@@ -123,7 +124,8 @@ class AuthService {
               headers: headers, body: body, method: method);
         }
       }
-      throw UnauthenticatedException('No refresh token available'); // 리프레시 토큰이 없을 때
+      throw UnauthenticatedException(
+          'No refresh token available'); // 리프레시 토큰이 없을 때
     }
 
     return response;

@@ -3,8 +3,8 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 
-import '../../../utils/authService.dart';
-import '../main_page.dart';
+import '../../../../utils/authService.dart';
+import '../../main_page.dart';
 
 class CreateDiaryPage extends StatefulWidget {
   final String date;

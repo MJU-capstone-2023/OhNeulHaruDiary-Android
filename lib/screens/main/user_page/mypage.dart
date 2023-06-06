@@ -23,8 +23,11 @@ class _MypageState extends State<Mypage> {
     final accessToken = await _authService.readAccessToken() ?? '';
     final response = await _authService.get(url, accessToken);
 
+    final responseJson = jsonDecode(utf8.decode(response.bodyBytes));
+    print(responseJson);
+
     if (response.statusCode == 200) {
-      return jsonDecode(response.body)['data'];
+      return responseJson['data'];
     } else {
       throw Exception('유저 데이터 조회 실패');
     }
