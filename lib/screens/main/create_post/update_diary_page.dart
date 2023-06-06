@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:fluttertoast/fluttertoast.dart';
 
 import '../../../utils/authService.dart';
 import '../main_page.dart';
@@ -69,18 +70,37 @@ class _UpdateDiaryPageState extends State<UpdateDiaryPage> {
     final response = await _authService.patch(
       url,
       accessToken,
-      body: {"new_content": content},
+      body: {
+        "new_content": content,
+        "new_emo": "1",
+        "new_wea": "3",
+        "new_date": selectedDate.toIso8601String().split('T')[0]
+      },
     );
+    final responseJson = jsonDecode(utf8.decode(response.bodyBytes));
+    print(responseJson);
 
     if (response.statusCode == 200) {
+      showToast('수정 되었습니다.');
       Navigator.pushAndRemoveUntil(
         context,
         MaterialPageRoute(builder: (context) => MainPage()),
         (route) => route == null,
       );
     } else {
+      showToast('다이어리 수정에 실패했습니다.');
       throw Exception('다이어리 수정에 실패했습니다.');
     }
+  }
+
+  void showToast(String message) {
+    Fluttertoast.showToast(
+      msg: message,
+      toastLength: Toast.LENGTH_SHORT,
+      gravity: ToastGravity.BOTTOM,
+      backgroundColor: Colors.red,
+      textColor: Colors.white,
+    );
   }
 
   @override
