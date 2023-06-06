@@ -31,7 +31,7 @@ class _MainPageState extends State<MainPage> {
           padding: const EdgeInsets.only(left: 15), // 좌측 여백 추가
           child: SizedBox(
             child: Image.asset(
-              'images/logo_v3.png',
+              'assets/images/logo_v3.png',
             ),
           ),
         ),
