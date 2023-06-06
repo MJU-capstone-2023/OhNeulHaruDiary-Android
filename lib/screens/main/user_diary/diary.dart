@@ -1,6 +1,8 @@
 import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+
 import '../../../utils/authService.dart';
 import '../../login/login_page.dart';
 import '../create_post/view_diary_page.dart';
@@ -98,13 +100,15 @@ class _DiaryState extends State<Diary> {
                         itemCount: diaries[index]['diaries'].length,
                         itemBuilder: (context, index2) {
                           return GestureDetector(
-                            onTap: () => _handleImageTap(diaries[index]['diaries'][index2]['diary_id'], context),
+                            onTap: () => _handleImageTap(
+                                diaries[index]['diaries'][index2]['diary_id'],
+                                context),
                             child: ClipRRect(
                               borderRadius: BorderRadius.circular(5),
                               child: diaries[index]['diaries'][index2]
                                           ['image_url'] ==
                                       null
-                                  ? Image.asset('images/logo_v2.png',
+                                  ? Image.asset('assets/images/logo_v2.png',
                                       fit: BoxFit.cover)
                                   : Image.network(
                                       diaries[index]['diaries'][index2]
@@ -125,11 +129,13 @@ class _DiaryState extends State<Diary> {
                   );
                 },
               );
-            } else if (snapshot.hasData && snapshot.data!.isEmpty) { // 사진이 없을 경우
+            } else if (snapshot.hasData && snapshot.data!.isEmpty) {
+              // 사진이 없을 경우
               return Center(
-                child: Image.asset('images/no_diary_img.png'),
+                child: Image.asset('assets/images/no_diary_img.png'),
               );
-            } else if (snapshot.hasError) { // 토큰이 만료됐을 경우: 로그인  페이지로 이동
+            } else if (snapshot.hasError) {
+              // 토큰이 만료됐을 경우: 로그인  페이지로 이동
               if (snapshot.error is UnauthenticatedException) {
                 WidgetsBinding.instance?.addPostFrameCallback((_) {
                   Navigator.pushReplacement(

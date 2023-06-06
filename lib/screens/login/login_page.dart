@@ -84,7 +84,7 @@ class _LoginPageState extends State<LoginPage> {
           const SizedBox(height: 100),
           SizedBox(
             height: 200,
-            child: Image.asset('images/logo_v2.png'), // 로고 이미지 경로
+            child: Image.asset('assets/images/logo_v2.png'), // 로고 이미지 경로
           ),
           const SizedBox(height: 32),
           Padding(
@@ -92,7 +92,7 @@ class _LoginPageState extends State<LoginPage> {
             child: TextField(
               controller: _emailController,
               decoration: InputDecoration(
-                hintText: '아이디 입력',
+                hintText: '이메일 입력',
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(8),
                   borderSide: const BorderSide(width: 1),

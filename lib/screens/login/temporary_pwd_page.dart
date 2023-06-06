@@ -5,57 +5,104 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:http/http.dart' as http;
 
+final BASE_URL = '${dotenv.env['BASE_URL']}';
+const HEADER_CONTENT_TYPE = 'application/json; charset=UTF-8';
+
 class TemporaryPwdPage extends StatefulWidget {
+  const TemporaryPwdPage({super.key});
+
   @override
   _TemporaryPwdPageState createState() => _TemporaryPwdPageState();
 }
 
 class _TemporaryPwdPageState extends State<TemporaryPwdPage> {
   final TextEditingController _emailController = TextEditingController();
+  final TextEditingController _nameController = TextEditingController();
   final TextEditingController _verifyCodeController = TextEditingController();
-  bool _canVerify = false;
+  final ValueNotifier<bool> _canCompleteVerify = ValueNotifier<bool>(false);
+  final ValueNotifier<bool> _canSendVerify = ValueNotifier<bool>(false);
 
-  Future<void> sendVerification(String email) async {
-    final response =
-        await http.post(Uri.parse('${dotenv.env['BASE_URL']}/auth/sendEmail'),
-            headers: <String, String>{
-              'Content-Type': 'application/json; charset=UTF-8',
-            },
-            body: jsonEncode({
-              'email': email,
-            }));
-
-    if (response.statusCode == 200) {
-      final responseJson = jsonDecode(utf8.decode(response.bodyBytes));
-      print(responseJson);
-      showToast('메일에 인증번호를 전송하였습니다.');
+  void _checkIfFieldsAreNotEmpty() {
+    if (_emailController.text.isNotEmpty &&
+        _nameController.text.isNotEmpty &&
+        _verifyCodeController.text.isNotEmpty) {
+      _canCompleteVerify.value = true;
     } else {
-      showToast('인증번호 전송에 실패하였습니다.');
-      throw Exception('인증번호 전송 실패');
+      _canCompleteVerify.value = false;
+    }
+  }
+
+  void _checkIfCanSendVerify() {
+    if (_emailController.text.isNotEmpty && _nameController.text.isNotEmpty) {
+      _canSendVerify.value = true;
+    } else {
+      _canSendVerify.value = false;
+    }
+  }
+
+  bool _checkEmailValidity(String email) {
+    String emailPattern = r'^[^@]+@[^@]+\.[^@]+$';
+    RegExp regex = RegExp(emailPattern);
+    if (!regex.hasMatch(email)) {
+      showToast('이메일 형태로 입력해주세요.');
+      return false;
+    }
+    return true;
+  }
+
+  Future<void> sendVerification(String email, String name) async {
+    if (!_checkEmailValidity(email)) {
+      return;
+    }
+    try {
+      final response =
+          await http.post(Uri.parse('$BASE_URL/auth/help/findPW/checkEmail'),
+              headers: <String, String>{
+                'Content-Type': HEADER_CONTENT_TYPE,
+              },
+              body: jsonEncode({
+                'email': email,
+                'name': name,
+              }));
+
+      if (response.statusCode == 200) {
+        final responseJson = jsonDecode(utf8.decode(response.bodyBytes));
+        print(responseJson);
+        showToast('메일에 인증번호를 전송하였습니다.');
+      } else {
+        showToast('인증번호 전송에 실패하였습니다.\n이름과 이메일을 확인 해주세요.');
+        throw Exception('인증번호 전송 실패');
+      }
+    } catch (e) {
+      print(e.toString());
+      showToast('에러가 발생하였습니다. 잠시 후 다시 시도해주세요.');
     }
   }
 
   Future<void> verifyCode(String email, String verifyCode) async {
-    final response = await http.post(
-      Uri.parse('${dotenv.env['BASE_URL']}/auth/help/findPW/verifyEmail'),
-      headers: <String, String>{
-        'Content-Type': 'application/json; charset=UTF-8',
-      },
-      body: jsonEncode({
-        'email': email,
-        'verifyCode': verifyCode,
-      }),
-    );
-    final responseJson = jsonDecode(utf8.decode(response.bodyBytes));
-    print(responseJson);
+    try {
+      final response = await http.post(
+        Uri.parse('$BASE_URL/auth/help/findPW/verifyEmail'),
+        headers: <String, String>{
+          'Content-Type': HEADER_CONTENT_TYPE,
+        },
+        body: jsonEncode({
+          'email': email,
+          'verifyCode': verifyCode,
+        }),
+      );
 
-    if (response.statusCode == 200) {
-      Fluttertoast.showToast(msg: "이메일 인증이 완료 되었습니다.");
-      setState(() {
-        _canVerify = true;
-      });
-    } else {
-      Fluttertoast.showToast(msg: "인증 실패, 인증번호를 확인해주세요.");
+      final responseJson = jsonDecode(utf8.decode(response.bodyBytes));
+      print(responseJson);
+
+      if (response.statusCode == 200) {
+        Fluttertoast.showToast(msg: "이메일 인증이 완료 되었습니다.");
+      } else {
+        Fluttertoast.showToast(msg: "인증 실패, 인증번호를 확인해주세요.");
+      }
+    } catch (e) {
+      print(e.toString());
+      showToast('에러가 발생하였습니다. 잠시 후 다시 시도해주세요.');
     }
   }
 
@@ -117,6 +164,17 @@ class _TemporaryPwdPageState extends State<TemporaryPwdPage> {
             const SizedBox(height: 86),
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 42),
+              child: _buildTextFormField(
+                controller: _nameController,
+                labelText: '이름',
+                onChanged: (value) {
+                  _checkIfCanSendVerify();
+                },
+              ),
+            ),
+            const SizedBox(height: 18),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 42),
               child: Row(
                 children: [
                   Expanded(
@@ -125,22 +183,25 @@ class _TemporaryPwdPageState extends State<TemporaryPwdPage> {
                       labelText: '이메일 주소',
                       keyboardType: TextInputType.emailAddress,
                       onChanged: (value) {
-                        setState(() {
-                          _canVerify = value.isNotEmpty;
-                        });
+                        _checkIfCanSendVerify();
                       },
-                    ),
+                    )
                   ),
                   const SizedBox(width: 18),
                   SizedBox(
                     height: 48,
-                    child: ElevatedButton(
-                      onPressed: _canVerify
-                          ? () {
-                              sendVerification(_emailController.text);
-                            }
-                          : null,
-                      child: const Text('인증'),
+                    child: ValueListenableBuilder(
+                      valueListenable: _canSendVerify,
+                      builder: (BuildContext context, bool canSend, Widget? child) {
+                        return ElevatedButton(
+                          onPressed: canSend
+                              ? () {
+                            sendVerification(_emailController.text, _nameController.text);
+                          }
+                              : null,
+                          child: const Text('인증'),
+                        );
+                      },
                     ),
                   ),
                 ],
@@ -153,23 +214,29 @@ class _TemporaryPwdPageState extends State<TemporaryPwdPage> {
                 controller: _verifyCodeController,
                 labelText: '인증번호 입력',
                 keyboardType: TextInputType.number,
+                onChanged: (value) {
+                  _checkIfFieldsAreNotEmpty();
+                },
               ),
             ),
             const SizedBox(height: 18),
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 42),
-              child: ElevatedButton(
-                onPressed: (_emailController.text.isNotEmpty &&
-                        _verifyCodeController.text.isNotEmpty)
-                    ? () {
-                        verifyCode(
-                            _emailController.text, _verifyCodeController.text);
-                      }
-                    : null,
-                style: ElevatedButton.styleFrom(
-                  minimumSize: Size(MediaQuery.of(context).size.width, 50),
-                ),
-                child: const Text('인증 완료'),
+              child: ValueListenableBuilder(
+                valueListenable: _canCompleteVerify,
+                builder: (BuildContext context, bool canVerify, Widget? child) {
+                  return ElevatedButton(
+                    onPressed: canVerify
+                        ? () {
+                      verifyCode(_emailController.text, _verifyCodeController.text);
+                    }
+                        : null,
+                    style: ElevatedButton.styleFrom(
+                      minimumSize: Size(MediaQuery.of(context).size.width, 50),
+                    ),
+                    child: const Text('인증 완료'),
+                  );
+                },
               ),
             ),
           ],

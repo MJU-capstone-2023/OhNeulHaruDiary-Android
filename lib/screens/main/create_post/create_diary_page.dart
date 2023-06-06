@@ -103,6 +103,11 @@ class _CreateDiaryPageState extends State<CreateDiaryPage> {
           Padding(
             padding: const EdgeInsets.all(16.0),
             child: TextFormField(
+              style: const TextStyle(
+                fontSize: 16.0,
+                letterSpacing: 1.0,
+                height: 1.5,
+              ),
               controller: _textEditingController,
               initialValue: widget.content,
               decoration: const InputDecoration(

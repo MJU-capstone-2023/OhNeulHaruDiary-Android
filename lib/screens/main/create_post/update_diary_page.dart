@@ -9,8 +9,11 @@ import '../main_page.dart';
 
 class UpdateDiaryPage extends StatefulWidget {
   final String diaryId;
+  final DateTime diaryDate;
 
-  const UpdateDiaryPage({Key? key, required this.diaryId}) : super(key: key);
+  const UpdateDiaryPage(
+      {Key? key, required this.diaryId, required this.diaryDate})
+      : super(key: key);
 
   @override
   _UpdateDiaryPageState createState() => _UpdateDiaryPageState();
@@ -21,6 +24,13 @@ class _UpdateDiaryPageState extends State<UpdateDiaryPage> {
   final _authService = AuthService();
   DateTime selectedDate = DateTime.now();
   TextEditingController _textEditingController = TextEditingController();
+
+  @override
+  void initState() {
+    super.initState();
+    _diary = _getDiaryById();
+    selectedDate = widget.diaryDate;
+  }
 
   // 날짜 선택
   void showDatePickerDialog() async {
@@ -36,12 +46,6 @@ class _UpdateDiaryPageState extends State<UpdateDiaryPage> {
         selectedDate = pickedDate;
       });
     }
-  }
-
-  @override
-  void initState() {
-    super.initState();
-    _diary = _getDiaryById();
   }
 
   // 기존 일기 내용 GET
@@ -181,15 +185,20 @@ class _UpdateDiaryPageState extends State<UpdateDiaryPage> {
                 Expanded(
                   child: Padding(
                     padding: const EdgeInsets.symmetric(
-                        vertical: 10.0, horizontal: 20.0),
+                        vertical: 30.0, horizontal: 24.0),
                     child: TextField(
                       controller: _textEditingController
                         ..text = snapshot.data!['content'] ?? '',
                       expands: true,
                       maxLines: null,
                       textAlignVertical: TextAlignVertical.top,
+                      style: const TextStyle(
+                        fontSize: 16.0,
+                        height: 1.8,
+                      ),
                       decoration: InputDecoration(
                         hintText: '오늘 하루를 기록해보세요!',
+                        contentPadding: const EdgeInsets.all(20.0),
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(15.0),
                           borderSide: const BorderSide(color: Colors.grey),

@@ -120,30 +120,21 @@ class _MypageState extends State<Mypage> {
             body: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Padding(
-                  padding: EdgeInsets.only(top: 13, bottom: 32),
-                  child: Center(
-                    child: Text(
-                      '내 정보',
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                      ),
+                Padding(
+                  padding: const EdgeInsets.only(top: 20, left: 20.0, right: 20, bottom: 10.0),
+                  child: Text(
+                    '${data?['name']}',
+                    style: const TextStyle(
+                      fontSize: 18.0,
+                      fontWeight: FontWeight.bold,
                     ),
                   ),
                 ),
                 Padding(
                   padding: EdgeInsets.only(left: 20.0, bottom: 10.0),
                   child: Text(
-                    '${data?['name']}',
-                    style: TextStyle(fontSize: 18.0),
-                  ),
-                ),
-                Padding(
-                  padding: EdgeInsets.only(left: 20.0, bottom: 10.0),
-                  child: Text(
-                    '${data?['birth']}',
-                    style: TextStyle(
+                    '생년월일 | ${data?['birth']}',
+                    style: const TextStyle(
                       fontSize: 14.0,
                       color: Colors.grey,
                     ),
@@ -152,7 +143,7 @@ class _MypageState extends State<Mypage> {
                 Padding(
                   padding: EdgeInsets.only(left: 20.0, bottom: 10.0),
                   child: Text(
-                    '${data?['auth_email']}',
+                    'E-mail | ${data?['auth_email']}',
                     style: TextStyle(
                       fontSize: 14.0,
                       color: Colors.grey,
