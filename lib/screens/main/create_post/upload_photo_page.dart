@@ -117,10 +117,12 @@ class _WritePageState extends State<UploadPhotoPage> {
     }
   }
 
-  Future<String> getUploadUrl(String imageName) async {
+  Future<String> getUploadUrl(List<String> imagePaths) async {
+    print(imagePaths);
     final url = '${dotenv.env['BASE_URL']}/diary/getS3Url';
     final accessToken = await _authService.readAccessToken() ?? '';
-    final response = await _authService.put(url, accessToken);
+    final response = await _authService
+        .put(url, accessToken, body: {"imagePaths": imagePaths});
 
     if (response.statusCode == 200) {
       var data = json.decode(response.body);
@@ -134,8 +136,10 @@ class _WritePageState extends State<UploadPhotoPage> {
   Future<void> uploadImage(File imageFile) async {
     var stream = http.ByteStream(DelegatingStream.typed(imageFile.openRead()));
     var length = await imageFile.length();
+    List<String> imagePaths =
+        images.map((image) => p.basename(image.path)).toList();
 
-    String uploadUrl = await getUploadUrl(p.basename(imageFile.path));
+    String uploadUrl = await getUploadUrl(imagePaths);
     var uri = Uri.parse(uploadUrl);
 
     var request = http.MultipartRequest("PUT", uri);
