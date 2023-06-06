@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:http/http.dart' as http;
+import 'package:sketch_day/screens/login/login_page.dart';
 
 class SignUpPage extends StatefulWidget {
   @override
@@ -123,10 +124,13 @@ class _SignUpPageState extends State<SignUpPage> {
         'Content-Type': 'application/json; charset=UTF-8',
       },
       body: jsonEncode({
-        'email': _emailController.text,
-        'verification_code': _verificationCodeController.text,
+        'email': _emailController.text.toString(),
+        'verifyCode': _verificationCodeController.text.toString(),
       }),
     );
+
+    final responseJson = jsonDecode(utf8.decode(response.bodyBytes));
+    print(responseJson);
 
     if (response.statusCode == 200) {
       Fluttertoast.showToast(msg: "이메일 인증이 완료 되었습니다.");
@@ -142,22 +146,33 @@ class _SignUpPageState extends State<SignUpPage> {
   Future<void> _handleSignup() async {
     final response = await http.post(
       Uri.parse('${dotenv.env['BASE_URL']}/auth/signup'),
-      body: {
+      headers: <String, String>{
+        'Content-Type': 'application/json; charset=UTF-8',
+      },
+      body: jsonEncode({
         'email': _emailController.text,
         'password': _passwordController.text,
         'birth': _birthDateController.text,
         'name': _nameController.text,
-      },
+      }),
     );
+
+    final responseJson = jsonDecode(utf8.decode(response.bodyBytes));
+    print(responseJson);
 
     if (response.statusCode == 200) {
       setState(() {
         _verificationCodeDisabled = true;
       });
       Fluttertoast.showToast(
-          msg: "인증 완료 되었습니다.", backgroundColor: Colors.green);
+          msg: "회원가입 되었습니다.", backgroundColor: Colors.green);
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (context) => LoginPage()),
+      );
     } else {
-      Fluttertoast.showToast(msg: "인증 실패, 인증번호를 확인해주세요.");
+      print("${_emailController.text}, ${_passwordController.text}, ${_birthDateController.text}, ${_nameController.text}");
+      Fluttertoast.showToast(msg: "회원가입 실패");
     }
   }
 
@@ -370,13 +385,9 @@ class _SignUpPageState extends State<SignUpPage> {
               child: ElevatedButton(
                 onPressed: _nameController.text.isNotEmpty &&
                         _emailController.text.isNotEmpty &&
-                        _verificationCodeDisabled &&
                         _passwordController.text.isNotEmpty &&
-                        _isPasswordValid &&
-                        _isConfirmPasswordValid &&
                         _confirmPasswordController.text.isNotEmpty &&
-                        _birthDateController.text.isNotEmpty &&
-                        _agreedToTerms
+                        _birthDateController.text.isNotEmpty
                     ? _handleSignup
                     : null,
                 style: ElevatedButton.styleFrom(

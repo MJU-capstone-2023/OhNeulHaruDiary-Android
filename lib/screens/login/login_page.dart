@@ -92,7 +92,7 @@ class _LoginPageState extends State<LoginPage> {
             child: TextField(
               controller: _emailController,
               decoration: InputDecoration(
-                hintText: '아이디 입력',
+                hintText: '이메일 입력',
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(8),
                   borderSide: const BorderSide(width: 1),
