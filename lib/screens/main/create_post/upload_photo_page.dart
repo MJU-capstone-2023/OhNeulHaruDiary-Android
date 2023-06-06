@@ -186,7 +186,15 @@ class _WritePageState extends State<UploadPhotoPage> {
                 const Spacer(),
                 TextButton(
                   onPressed: () {
-                    uploadImages(); // 이미지 s3에 업로드
+                    if (images.isEmpty) {
+                      Fluttertoast.showToast(
+                        msg: "이미지를 한 장 이상 선택해주세요.",
+                        toastLength: Toast.LENGTH_SHORT,
+                        gravity: ToastGravity.CENTER,
+                      );
+                    } else {
+                      uploadImages(); // 이미지 s3에 업로드
+                    }
                   },
                   child: const Text(
                     '다음',
@@ -256,7 +264,7 @@ class _WritePageState extends State<UploadPhotoPage> {
                   height: 400,
                   child: images.isEmpty
                       ? Image.asset(
-                          'images/no_messenger_img.png',
+                          'assets/images/no_messenger_img.png',
                           fit: BoxFit.cover,
                         )
                       : GridView.count(

@@ -133,14 +133,19 @@ class _WritePageState extends State<WriteDiaryPage> {
           Expanded(
             child: Padding(
               padding:
-                  const EdgeInsets.symmetric(vertical: 10.0, horizontal: 20.0),
+                  const EdgeInsets.symmetric(vertical: 30.0, horizontal: 24.0),
               child: TextField(
                 controller: _textEditingController,
                 expands: true,
                 maxLines: null,
                 textAlignVertical: TextAlignVertical.top,
+                style: const TextStyle(
+                  fontSize: 16.0,
+                  height: 1.8,
+                ),
                 decoration: InputDecoration(
                   hintText: '오늘 하루를 기록해보세요!',
+                  contentPadding: const EdgeInsets.all(20.0),
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(15.0),
                     borderSide: const BorderSide(color: Colors.grey),

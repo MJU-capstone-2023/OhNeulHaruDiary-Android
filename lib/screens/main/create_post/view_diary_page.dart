@@ -136,6 +136,8 @@ class _ViewDiaryPageState extends State<ViewDiaryPage> {
                             MaterialPageRoute(
                               builder: (context) => UpdateDiaryPage(
                                 diaryId: widget.diaryId,
+                                diaryDate:
+                                    DateTime.parse(snapshot.data!['date']),
                               ),
                             ),
                           );
@@ -163,13 +165,17 @@ class _ViewDiaryPageState extends State<ViewDiaryPage> {
                   ),
                 ),
                 Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 10.0),
+                  padding: const EdgeInsets.symmetric(vertical: 26.0),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       SizedBox(width: 10.0),
                       Text(
-                        snapshot.data!['date'] ?? '2000-00-00',
+                        (() {
+                          DateTime parsedDate = DateTime.parse(
+                              snapshot.data!['date'] ?? '2000-01-01');
+                          return '${parsedDate.year}년 ${parsedDate.month}월 ${parsedDate.day}일';
+                        })(),
                         style: const TextStyle(
                           fontSize: 18.0,
                           fontWeight: FontWeight.bold,
@@ -179,7 +185,7 @@ class _ViewDiaryPageState extends State<ViewDiaryPage> {
                   ),
                 ),
                 Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 20.0),
+                  padding: const EdgeInsets.symmetric(horizontal: 10.0),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
@@ -203,12 +209,13 @@ class _ViewDiaryPageState extends State<ViewDiaryPage> {
                 Expanded(
                   child: Padding(
                     padding: const EdgeInsets.symmetric(
-                        vertical: 10.0, horizontal: 20.0),
+                        vertical: 40.0, horizontal: 40.0),
                     child: SingleChildScrollView(
                       child: Text(
                         snapshot.data!['content'] ?? '',
                         style: const TextStyle(
                           fontSize: 16.0,
+                          height: 2,
                         ),
                       ),
                     ),
