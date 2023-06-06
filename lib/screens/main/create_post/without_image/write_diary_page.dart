@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:sketch_day/screens/main/main_page.dart';
 
-import '../../../utils/authService.dart';
+import '../../../../utils/authService.dart';
 
 class WriteDiaryPage extends StatefulWidget {
   @override

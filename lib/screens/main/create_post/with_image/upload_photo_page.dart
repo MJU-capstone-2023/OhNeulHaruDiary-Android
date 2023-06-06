@@ -9,7 +9,7 @@ import 'package:http/http.dart' as http;
 import 'package:image_picker/image_picker.dart';
 import 'package:path/path.dart' as p;
 
-import '../../../utils/authService.dart';
+import '../../../../utils/authService.dart';
 import 'create_diary_page.dart';
 
 class UploadPhotoPage extends StatefulWidget {

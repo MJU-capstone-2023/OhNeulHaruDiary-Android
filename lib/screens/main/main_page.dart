@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
-import 'package:sketch_day/screens/main/create_post/upload_photo_page.dart';
+import 'package:sketch_day/screens/main/create_post/with_image/upload_photo_page.dart';
 import 'package:sketch_day/screens/main/user_diary/diary.dart';
 import 'package:sketch_day/screens/main/user_page/mypage.dart';
 
 import '../../widgets/bottom_navigation_bar.dart';
 import '../../widgets/floating_action_button.dart';
-import 'create_post/write_diary_page.dart';
+import 'create_post/without_image/write_diary_page.dart';
 
 class MainPage extends StatefulWidget {
   const MainPage({Key? key}) : super(key: key);
