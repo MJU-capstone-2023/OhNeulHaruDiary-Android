@@ -123,19 +123,32 @@ class _WritePageState extends State<UploadPhotoPage> {
     for (int i = 0; i < images.length; i++) {
       // 이미지 업로드
       File imageFile = File(images[i].path);
-      var stream =
-          http.ByteStream(DelegatingStream.typed(imageFile.openRead()));
-      var length = await imageFile.length();
+      var fileBytes = await imageFile.readAsBytes();
       var uri = Uri.parse(uploadUrls[i]);
       print(uri);
 
-      var request = http.MultipartRequest("PUT", uri);
-      var multipartFile = http.MultipartFile('file', stream, length,
-          filename: p.basename(imageFile.path));
+      String fileType = p.extension(images[i].path).toLowerCase(); // 확장자 추출
+      String contentType;
 
-      request.files.add(multipartFile);
+      switch (fileType) {
+        case '.jpeg':
+        case '.jpg':
+          contentType = 'image/jpeg';
+          break;
+        case '.png':
+          contentType = 'image/png';
+          break;
+        default:
+          contentType = 'application/octet-stream'; // 미지원 확장자에 대한 기본값
+      }
 
-      var response = await request.send();
+      var response = await http.put(
+        uri,
+        headers: {
+          'Content-Type': contentType,
+        },
+        body: fileBytes,
+      );
 
       if (response.statusCode == 200) {
         print('S3 이미지 업로드 성공');
