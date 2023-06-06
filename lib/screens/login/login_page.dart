@@ -5,6 +5,7 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:http/http.dart' as http;
 import 'package:sketch_day/screens/login/signup_page.dart';
+import 'package:sketch_day/screens/login/temporary_pwd_page.dart';
 import 'package:sketch_day/screens/main/main_page.dart';
 
 import '../../utils/authService.dart';
@@ -166,7 +167,12 @@ class _LoginPageState extends State<LoginPage> {
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               TextButton(
-                onPressed: () {},
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => TemporaryPwdPage()),
+                  );
+                },
                 child: const Text(
                   '비밀번호 찾기',
                   style: TextStyle(decoration: TextDecoration.underline),
