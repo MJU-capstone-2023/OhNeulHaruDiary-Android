@@ -33,6 +33,7 @@ class MyApp extends StatelessWidget {
       title: 'My App',
       home: authService.readAccessToken() != null ? const MainPage() : LoginPage(),
       theme: ThemeData(
+        fontFamily: 'Pretendard',
         colorScheme: const ColorScheme(
           primary: Color(0xFF093879),
           secondary: Colors.indigo,
