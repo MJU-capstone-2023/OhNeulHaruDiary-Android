@@ -1,7 +1,6 @@
 import 'dart:convert';
 import 'dart:io';
 
-import 'package:async/async.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:fluttertoast/fluttertoast.dart';
@@ -11,7 +10,6 @@ import 'package:path/path.dart' as p;
 import 'package:sketch_day/screens/main/main_page.dart';
 
 import '../../../../utils/authService.dart';
-import 'create_diary_page.dart';
 
 class UploadPhotoPage extends StatefulWidget {
   @override
@@ -24,6 +22,7 @@ class _WritePageState extends State<UploadPhotoPage> {
   final _authService = AuthService();
   List<XFile> images = []; // 선택된 이미지를 저장하는 리스트
 
+  // 이미지 삭제 다이얼로그
   Future<void> showDeleteDialog(int index) async {
     bool? confirmed = await showDialog<bool>(
       context: context,
@@ -56,6 +55,7 @@ class _WritePageState extends State<UploadPhotoPage> {
     }
   }
 
+  // 이미지 UI
   Widget buildImage(File image, int index) {
     return Stack(
       children: [
@@ -84,6 +84,7 @@ class _WritePageState extends State<UploadPhotoPage> {
     );
   }
 
+  // 날짜 선택
   void showDatePickerDialog() async {
     final DateTime? pickedDate = await showDatePicker(
       context: context,
@@ -99,6 +100,7 @@ class _WritePageState extends State<UploadPhotoPage> {
     }
   }
 
+  // 갤러리에서 이미지 선택
   Future getImage() async {
     print("getImage");
     final ImagePicker picker = ImagePicker();
@@ -112,63 +114,69 @@ class _WritePageState extends State<UploadPhotoPage> {
     });
   }
 
+  // 이미지를 s3에 업로드
   Future<bool> uploadImages(List<XFile> images) async {
-    // 이미지를 s3에 업로드
-    List<String> imagePaths = images
-        .map((image) => p.basename(File(image.path).path))
-        .toList(); // 파일명 + 확장자 추출
+    try {
+      List<String> imagePaths = images
+          .map((image) => p.basename(File(image.path).path))
+          .toList(); // 파일명 + 확장자 추출
 
-    List<String> uploadUrls =
-        await getUploadUrls(imagePaths); // 각 파일에 대한 presign url 요청
+      List<String> uploadUrls =
+          await getUploadUrls(imagePaths); // 각 파일에 대한 presign url 요청
 
-    for (int i = 0; i < images.length; i++) {
-      // 이미지 업로드
-      File imageFile = File(images[i].path);
-      var fileBytes = await imageFile.readAsBytes();
-      var uri = Uri.parse(uploadUrls[i]);
-      print(uri);
+      for (int i = 0; i < images.length; i++) {
+        // 이미지 업로드
+        File imageFile = File(images[i].path);
+        var fileBytes = await imageFile.readAsBytes();
+        var uri = Uri.parse(uploadUrls[i]);
+        print(uri);
 
-      String fileType = p.extension(images[i].path).toLowerCase(); // 확장자 추출
-      String contentType;
+        String fileType = p.extension(images[i].path).toLowerCase(); // 확장자 추출
+        String contentType;
 
-      switch (fileType) {
-        case '.jpeg':
-        case '.jpg':
-          contentType = 'image/jpeg';
-          break;
-        case '.png':
-          contentType = 'image/png';
-          break;
-        default:
-          contentType = 'application/octet-stream'; // 미지원 확장자에 대한 기본값
+        switch (fileType) {
+          case '.jpeg':
+          case '.jpg':
+            contentType = 'image/jpeg';
+            break;
+          case '.png':
+            contentType = 'image/png';
+            break;
+          default:
+            contentType = 'application/octet-stream'; // 미지원 확장자에 대한 기본값
+        }
+
+        var response = await http.put(
+          uri,
+          headers: {
+            'Content-Type': contentType,
+          },
+          body: fileBytes,
+        );
+
+        if (response.statusCode == 200) {
+          print('S3 이미지 업로드 성공');
+          await getSummary(imagePaths); // async/await를 추가하여 getSummary의 완료를 기다림
+        } else {
+          Fluttertoast.showToast(msg: "이미지 업로드에 실패했습니다.");
+          throw Exception('이미지 업로드에 실패했습니다.');
+          return false; // false 반환 추가
+        }
       }
-
-      var response = await http.put(
-        uri,
-        headers: {
-          'Content-Type': contentType,
-        },
-        body: fileBytes,
-      );
-
-      if (response.statusCode == 200) {
-        print('S3 이미지 업로드 성공');
-        await getSummary(imagePaths);  // async/await를 추가하여 getSummary의 완료를 기다림
-      } else {
-        Fluttertoast.showToast(msg: "이미지 업로드에 실패했습니다.");
-        return false;  // false 반환 추가
-      }
+      return true; // 모든 업로드가 성공하면 true를 반환
+    } catch (e) {
+      print(e);
+      return false;
     }
-
-    return true;  // 모든 업로드가 성공하면 true를 반환
   }
 
   Future<void> getSummary(List<String> imagePaths) async {
+    print("일기 요약 요청");
     final url = '${dotenv.env['BASE_URL']}/diary/uploadImg';
     final accessToken = await _authService.readAccessToken() ?? '';
 
-    List<String> imageUrls = imagePaths.map((url) {
-      return '${dotenv.env['AWS_S3']}/$url';
+    List<String> imageUrls = imagePaths.map((imageUrl) {
+      return '${dotenv.env['AWS_S3']}/$imageUrl';
     }).toList();
 
     final response = await _authService.post(
@@ -178,16 +186,13 @@ class _WritePageState extends State<UploadPhotoPage> {
         'date': selectedDate.toIso8601String().split('T')[0],
         'emo_id': "1",
         'wea_id': "1",
-        'imageUrls': imageUrls
+        's3_urls': imageUrls
       },
     );
-
-    final responseJson = jsonDecode(utf8.decode(response.bodyBytes));
-    print(responseJson);
+    print(jsonDecode(utf8.decode(response.bodyBytes)));
 
     if (response.statusCode == 200) {
       Navigator.push(
-        // 일기 요약 완료시 메인 페이지로 이동
         context,
         MaterialPageRoute(
           builder: (_) => MainPage(),
