@@ -33,6 +33,7 @@ class _ViewDiaryPageState extends State<ViewDiaryPage> {
       setState(() {
         _imageURL = responseJson['url'];
       });
+      Fluttertoast.showToast(msg: "그림 생성 성공!");
     } else {
       Fluttertoast.showToast(msg: "그림 생성에 실패했습니다.");
       throw Exception('그림 생성에 실패했습니다.');
@@ -77,6 +78,7 @@ class _ViewDiaryPageState extends State<ViewDiaryPage> {
         (route) => route == null,
       );
     } else {
+      Fluttertoast.showToast(msg: "다이어리 삭제에 실패했습니다.");
       throw Exception('다이어리 삭제에 실패했습니다.');
     }
   }
