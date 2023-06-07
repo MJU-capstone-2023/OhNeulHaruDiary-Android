@@ -8,6 +8,7 @@ import 'package:fluttertoast/fluttertoast.dart';
 import 'package:http/http.dart' as http;
 import 'package:image_picker/image_picker.dart';
 import 'package:path/path.dart' as p;
+import 'package:sketch_day/screens/main/main_page.dart';
 
 import '../../../../utils/authService.dart';
 import 'create_diary_page.dart';
@@ -111,7 +112,7 @@ class _WritePageState extends State<UploadPhotoPage> {
     });
   }
 
-  Future<void> uploadImages(List<XFile> images) async {
+  Future<bool> uploadImages(List<XFile> images) async {
     // 이미지를 s3에 업로드
     List<String> imagePaths = images
         .map((image) => p.basename(File(image.path).path))
@@ -152,22 +153,32 @@ class _WritePageState extends State<UploadPhotoPage> {
 
       if (response.statusCode == 200) {
         print('S3 이미지 업로드 성공');
-        // getSummary(imagePaths); // TODO !!
+        await getSummary(imagePaths);  // async/await를 추가하여 getSummary의 완료를 기다림
       } else {
         Fluttertoast.showToast(msg: "이미지 업로드에 실패했습니다.");
-        return;
+        return false;  // false 반환 추가
       }
     }
+
+    return true;  // 모든 업로드가 성공하면 true를 반환
   }
 
-  Future<void> getSummary(List<String> imageUrls) async {
-    final url = '${dotenv.env['BASE_URL']}/diary/create'; // TODO: url 변경 필요
+  Future<void> getSummary(List<String> imagePaths) async {
+    final url = '${dotenv.env['BASE_URL']}/diary/uploadImg';
     final accessToken = await _authService.readAccessToken() ?? '';
+
+    List<String> imageUrls = imagePaths.map((url) {
+      return '${dotenv.env['AWS_S3']}/$url';
+    }).toList();
+
     final response = await _authService.post(
       url,
       accessToken,
       body: {
-        'imageUrls': imageUrls // TODO: 서버 변수명에 맞게 수정
+        'date': selectedDate.toIso8601String().split('T')[0],
+        'emo_id': "1",
+        'wea_id': "1",
+        'imageUrls': imageUrls
       },
     );
 
@@ -175,20 +186,53 @@ class _WritePageState extends State<UploadPhotoPage> {
     print(responseJson);
 
     if (response.statusCode == 200) {
-      String summary = responseJson['summary']; // TODO: 서버 변수명에 맞게 수정
       Navigator.push(
-        // 일기 요약 완료시 저장 페이지로 이동
+        // 일기 요약 완료시 메인 페이지로 이동
         context,
         MaterialPageRoute(
-          builder: (_) => CreateDiaryPage(
-            date: selectedDate.toIso8601String().split('T')[0],
-            content: summary,
-          ),
+          builder: (_) => MainPage(),
         ),
       );
+      Fluttertoast.showToast(msg: "일기 생성에 성공하였습니다.");
     } else {
-      Fluttertoast.showToast(msg: "일기 요약에 실패했습니다.");
-      throw Exception('일기 요약에 실패했습니다.');
+      Fluttertoast.showToast(msg: "일기 생성에 실패하였습니다.");
+      throw Exception('일기 생성에 실패했습니다.');
+    }
+  }
+
+  void nextButtonPressed() {
+    if (images.isEmpty) {
+      Fluttertoast.showToast(
+        msg: "이미지를 선택해주세요.",
+        toastLength: Toast.LENGTH_SHORT,
+        gravity: ToastGravity.CENTER,
+      );
+    } else {
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (BuildContext context) {
+          return AlertDialog(
+            content: Row(
+              children: [
+                CircularProgressIndicator(),
+                Padding(
+                  padding: EdgeInsets.only(left: 10),
+                  child: Text("이미지 업로드 중..."),
+                )
+              ],
+            ),
+          );
+        },
+      );
+
+      uploadImages(images).then((success) {
+        Navigator.of(context).pop(); // 로딩 다이얼로그를 제거
+
+        if (!success) {
+          Fluttertoast.showToast(msg: "이미지 업로드에 실패했습니다.");
+        }
+      });
     }
   }
 
@@ -227,17 +271,7 @@ class _WritePageState extends State<UploadPhotoPage> {
                 ),
                 const Spacer(),
                 TextButton(
-                  onPressed: () {
-                    if (images.isEmpty) {
-                      Fluttertoast.showToast(
-                        msg: "이미지를 선택해주세요.",
-                        toastLength: Toast.LENGTH_SHORT,
-                        gravity: ToastGravity.CENTER,
-                      );
-                    } else {
-                      uploadImages(images);
-                    }
-                  },
+                  onPressed: nextButtonPressed,
                   child: const Text(
                     '다음',
                     style: TextStyle(
