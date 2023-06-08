@@ -5,6 +5,9 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:http/http.dart' as http;
 
+import '../../widgets/show_loading_dialog.dart';
+import 'login_page.dart';
+
 final BASE_URL = '${dotenv.env['BASE_URL']}';
 const HEADER_CONTENT_TYPE = 'application/json; charset=UTF-8';
 
@@ -51,6 +54,7 @@ class _TemporaryPwdPageState extends State<TemporaryPwdPage> {
   }
 
   Future<void> sendVerification(String email, String name) async {
+    showLoadingDialog(context);
     if (!_checkEmailValidity(email)) {
       return;
     }
@@ -64,6 +68,7 @@ class _TemporaryPwdPageState extends State<TemporaryPwdPage> {
                 'email': email,
                 'name': name,
               }));
+      Navigator.pop(context);
 
       if (response.statusCode == 200) {
         final responseJson = jsonDecode(utf8.decode(response.bodyBytes));
@@ -80,6 +85,7 @@ class _TemporaryPwdPageState extends State<TemporaryPwdPage> {
   }
 
   Future<void> verifyCode(String email, String verifyCode) async {
+    showLoadingDialog(context);
     try {
       final response = await http.post(
         Uri.parse('$BASE_URL/auth/help/findPW/verifyEmail'),
@@ -91,12 +97,17 @@ class _TemporaryPwdPageState extends State<TemporaryPwdPage> {
           'verifyCode': verifyCode,
         }),
       );
+      Navigator.pop(context);
 
       final responseJson = jsonDecode(utf8.decode(response.bodyBytes));
       print(responseJson);
 
       if (response.statusCode == 200) {
-        Fluttertoast.showToast(msg: "이메일 인증이 완료 되었습니다.");
+        Fluttertoast.showToast(msg: "임시 비밀번호를 발급하였습니다.\n해당 비밀번호로 로그인 한 후, 비밀번호를 변경해주세요.");
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => LoginPage()),
+        );
       } else {
         Fluttertoast.showToast(msg: "인증 실패, 인증번호를 확인해주세요.");
       }

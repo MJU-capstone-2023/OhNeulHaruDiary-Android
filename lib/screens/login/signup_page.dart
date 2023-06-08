@@ -6,6 +6,8 @@ import 'package:fluttertoast/fluttertoast.dart';
 import 'package:http/http.dart' as http;
 import 'package:sketch_day/screens/login/login_page.dart';
 
+import '../../widgets/show_loading_dialog.dart';
+
 class SignUpPage extends StatefulWidget {
   @override
   _SignUpPageState createState() => _SignUpPageState();
@@ -83,6 +85,7 @@ class _SignUpPageState extends State<SignUpPage> {
 
   // POST: 인증번호 전송
   Future<void> _sendEmailVerification() async {
+    showLoadingDialog(context);
     print(_emailController.text.toString());
     if (!RegExp(r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$")
         .hasMatch(_emailController.text)) {
@@ -99,6 +102,7 @@ class _SignUpPageState extends State<SignUpPage> {
         'email': _emailController.text,
       }),
     );
+    Navigator.pop(context);
 
     if (response.statusCode == 200) {
       Fluttertoast.showToast(msg: "인증번호를 발송하였습니다.");
@@ -117,6 +121,7 @@ class _SignUpPageState extends State<SignUpPage> {
 
   // POST: 인증번호 검증
   Future<void> _verifyVerificationCode() async {
+    showLoadingDialog(context);
     print("${_emailController.text.toString()}, ${_verificationCodeController.text.toString()}");
     final response = await http.post(
       Uri.parse('${dotenv.env['BASE_URL']}/auth/verifyEmail'),
@@ -128,6 +133,7 @@ class _SignUpPageState extends State<SignUpPage> {
         'verifyCode': _verificationCodeController.text.toString(),
       }),
     );
+    Navigator.pop(context);
 
     final responseJson = jsonDecode(utf8.decode(response.bodyBytes));
     print(responseJson);
@@ -144,6 +150,7 @@ class _SignUpPageState extends State<SignUpPage> {
 
   // POST: 회원가입
   Future<void> _handleSignup() async {
+    showLoadingDialog(context);
     final response = await http.post(
       Uri.parse('${dotenv.env['BASE_URL']}/auth/signup'),
       headers: <String, String>{
@@ -156,6 +163,7 @@ class _SignUpPageState extends State<SignUpPage> {
         'name': _nameController.text,
       }),
     );
+    Navigator.pop(context);
 
     final responseJson = jsonDecode(utf8.decode(response.bodyBytes));
     print(responseJson);

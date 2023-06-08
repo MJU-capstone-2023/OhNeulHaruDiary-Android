@@ -3,6 +3,7 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 
 import '../../../utils/authService.dart';
+import '../../../widgets/show_loading_dialog.dart';
 
 class UpdatePasswordPage extends StatefulWidget {
   @override
@@ -24,6 +25,7 @@ class _UpdatePasswordPageState extends State<UpdatePasswordPage> {
   bool _confirmPasswordVisible = false;
 
   Future<void> updatePassword(String newPwd) async {
+    showLoadingDialog(context);
     final url = '${dotenv.env['BASE_URL']}/auth/help/resetPW';
     final accessToken = await _authService.readAccessToken() ?? '';
     final response = await _authService.post(
@@ -33,6 +35,7 @@ class _UpdatePasswordPageState extends State<UpdatePasswordPage> {
         'new_password': newPwd,
       },
     );
+    Navigator.pop(context);
 
     if (response.statusCode == 200) {
       Navigator.pop(context);

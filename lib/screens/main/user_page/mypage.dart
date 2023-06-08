@@ -6,6 +6,7 @@ import 'package:fluttertoast/fluttertoast.dart';
 import 'package:sketch_day/screens/main/user_page/update_password_page.dart';
 
 import '../../../utils/authService.dart';
+import '../../../widgets/show_loading_dialog.dart';
 import '../../login/login_page.dart';
 
 class Mypage extends StatefulWidget {
@@ -75,13 +76,16 @@ class _MypageState extends State<Mypage> {
       context,
       '모든 데이터가 제거됩니다.\n정말로 회원탈퇴 하시겠습니까?',
       () async {
+        showLoadingDialog(context);
         try {
           final url = '${dotenv.env['BASE_URL']}/auth/deleteUser';
           final accessToken = await _authService.readAccessToken() ?? '';
           final response = await _authService.delete(url, accessToken);
+          Navigator.pop(context);
 
           if (response.statusCode == 200) {
             await _authService.deleteTokens();
+            showToast('회원탈퇴 되었습니다.');
             Navigator.pushAndRemoveUntil(
               context,
               MaterialPageRoute(builder: (context) => LoginPage()),
