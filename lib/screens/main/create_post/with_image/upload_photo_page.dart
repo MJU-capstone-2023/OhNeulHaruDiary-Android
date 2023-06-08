@@ -9,6 +9,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:path/path.dart' as p;
 
 import '../../../../utils/authService.dart';
+import '../../../../widgets/show_loading_dialog.dart';
 import '../view_diary_page.dart';
 
 class UploadPhotoPage extends StatefulWidget {
@@ -128,6 +129,7 @@ class _WritePageState extends State<UploadPhotoPage> {
 
   // 이미지를 s3에 업로드
   Future<void> uploadImages(List<XFile> images) async {
+    showLoadingDialog(context);
     List<String> imagePaths = images
         .map((image) => p.basename(File(image.path).path))
         .toList(); // 파일명 + 확장자 추출
@@ -164,6 +166,7 @@ class _WritePageState extends State<UploadPhotoPage> {
         },
         body: fileBytes,
       );
+      Navigator.pop(context);
 
       if (response.statusCode == 200) {
         print('S3 이미지 업로드 성공');
@@ -177,10 +180,13 @@ class _WritePageState extends State<UploadPhotoPage> {
 
   // presign url 요청
   Future<List<String>> getUploadUrls(List<String> imagePaths) async {
+    showLoadingDialog(context);
     print("presign url 요청");
     final url = '${dotenv.env['BASE_URL']}/diary/getS3Url';
     final accessToken = await _authService.readAccessToken() ?? '';
     final response = await _authService.put(url, accessToken, body: {"imagePaths": imagePaths});
+    Navigator.pop(context);
+
     if (response.statusCode == 200) {
       var data = json.decode(utf8.decode(response.bodyBytes));
       return List<String>.from(data['s3_url']);
@@ -191,6 +197,7 @@ class _WritePageState extends State<UploadPhotoPage> {
   }
 
   Future<void> getSummary(List<String> imagePaths) async {
+    showLoadingDialog(context);
     print("일기 요약 요청");
     final url = '${dotenv.env['BASE_URL']}/diary/uploadImg';
     final accessToken = await _authService.readAccessToken() ?? '';
@@ -207,6 +214,8 @@ class _WritePageState extends State<UploadPhotoPage> {
         's3_urls': imageUrls
       },
     );
+    Navigator.pop(context);
+
     final jsonDecode = json.decode(utf8.decode(response.bodyBytes));
     print(jsonDecode);
     if (response.statusCode == 200) {

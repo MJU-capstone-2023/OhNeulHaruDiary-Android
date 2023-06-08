@@ -5,6 +5,7 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 
 import '../../../utils/authService.dart';
+import '../../../widgets/show_loading_dialog.dart';
 import '../main_page.dart';
 
 class UpdateDiaryPage extends StatefulWidget {
@@ -66,6 +67,7 @@ class _UpdateDiaryPageState extends State<UpdateDiaryPage> {
 
   // 일기 수정
   Future<void> _updateDiaryById() async {
+    showLoadingDialog(context);
     final url = '${dotenv.env['BASE_URL']}/diary/update?id=${widget.diaryId}';
     final accessToken = await _authService.readAccessToken() ?? '';
 
@@ -83,6 +85,7 @@ class _UpdateDiaryPageState extends State<UpdateDiaryPage> {
     );
     final responseJson = jsonDecode(utf8.decode(response.bodyBytes));
     print(responseJson);
+    Navigator.pop(context);
 
     if (response.statusCode == 200) {
       showToast('수정 되었습니다.');

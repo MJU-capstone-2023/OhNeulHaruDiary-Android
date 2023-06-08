@@ -23,10 +23,32 @@ class _ViewDiaryPageState extends State<ViewDiaryPage> {
   String _imageURL = '';
 
   Future<void> _fetchImageURL() async {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (BuildContext context) {
+        return Dialog(
+          child: Container(
+            height: 100,
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                CircularProgressIndicator(),
+                SizedBox(width: 20),
+                Text("Loading"),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+
     final url =
         '${dotenv.env['BASE_URL']}/diary/createImg?id=${widget.diaryId}';
     final accessToken = await _authService.readAccessToken() ?? '';
     final response = await _authService.patch(url, accessToken);
+    Navigator.pop(context);
 
     if (response.statusCode == 200) {
       final responseJson = jsonDecode(utf8.decode(response.bodyBytes));

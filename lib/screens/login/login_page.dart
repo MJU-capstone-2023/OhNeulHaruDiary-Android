@@ -7,6 +7,7 @@ import 'package:http/http.dart' as http;
 import 'package:sketch_day/screens/login/signup_page.dart';
 import 'package:sketch_day/screens/login/temporary_pwd_page.dart';
 import 'package:sketch_day/screens/main/main_page.dart';
+import 'package:sketch_day/widgets/show_loading_dialog.dart';
 
 import '../../utils/authService.dart';
 
@@ -44,6 +45,7 @@ class _LoginPageState extends State<LoginPage> {
   }
 
   Future<void> _handleLogin() async {
+    showLoadingDialog(context);
     final email = _emailController.text;
     final password = _passwordController.text;
 
@@ -57,6 +59,7 @@ class _LoginPageState extends State<LoginPage> {
         'password': password,
       }),
     );
+    Navigator.pop(context);
 
     if (response.statusCode == 200) {
       final responseData = json.decode(response.body);
