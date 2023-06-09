@@ -1,9 +1,12 @@
+import 'dart:async';
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:fluttertoast/fluttertoast.dart';
 
 import '../../../utils/authService.dart';
+import '../../../widgets/show_loading_dialog.dart';
 import '../../login/login_page.dart';
 import '../create_post/view_diary_page.dart';
 
@@ -43,9 +46,22 @@ class _DiaryState extends State<Diary> {
 
   // 새로 고침
   Future<void> _refreshDiaries() async {
+    showLoadingDialog(context);
+    var completer = Completer();  // Completer 인스턴스 생성
+
     setState(() {
       _futureDiaries = _fetchDiaries();
+      _futureDiaries.whenComplete(() => completer.complete());  // _fetchDiaries가 완료되면 completer를 완료시킴
     });
+
+    try {
+      await completer.future;  // completer가 완료될 때까지 기다림
+    } catch (e) {
+      Fluttertoast.showToast(msg: "새로고침 실패");
+    } finally {
+      Navigator.pop(context);
+      Fluttertoast.showToast(msg: "새로고침 완료");
+    }
   }
 
   // 일기(이미지) 선택

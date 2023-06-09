@@ -8,14 +8,17 @@ void showLoadingDialog(BuildContext context) {
     builder: (BuildContext context) {
       return Dialog(
         child: Container(
-          height: 100,
+          height: 68,
           child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              CircularProgressIndicator(),
-              SizedBox(width: 20),
-              Text("Loading"),
+              Padding(
+                padding: const EdgeInsets.only(left: 20.0),
+                child: CircularProgressIndicator(),
+              ),
+              Expanded(child: Text("Loading ...", textAlign: TextAlign.center,)),
+              Spacer(),
             ],
           ),
         ),
