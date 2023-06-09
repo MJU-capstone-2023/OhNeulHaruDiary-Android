@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:fluttertoast/fluttertoast.dart';
+import 'package:sketch_day/screens/main/create_post/view_diary_page.dart';
 
 import '../../../utils/authService.dart';
 import '../../../widgets/show_loading_dialog.dart';
@@ -89,10 +90,9 @@ class _UpdateDiaryPageState extends State<UpdateDiaryPage> {
 
     if (response.statusCode == 200) {
       showToast('수정 되었습니다.');
-      Navigator.pushAndRemoveUntil(
-        context,
-        MaterialPageRoute(builder: (context) => MainPage()),
-        (route) => route == null,
+      Navigator.of(context).pushAndRemoveUntil(
+          MaterialPageRoute(builder: (context) => ViewDiaryPage(diaryId: widget.diaryId)),
+              (route) => route.isFirst
       );
     } else {
       showToast('다이어리 수정에 실패했습니다.');

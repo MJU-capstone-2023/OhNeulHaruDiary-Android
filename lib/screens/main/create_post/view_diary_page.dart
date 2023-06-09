@@ -126,8 +126,8 @@ class _ViewDiaryPageState extends State<ViewDiaryPage> {
             TextButton(
               child: const Text('삭제'),
               onPressed: () {
-                _removeDiaryById();
                 Navigator.of(context).pop();
+                _removeDiaryById();
               },
             ),
           ],

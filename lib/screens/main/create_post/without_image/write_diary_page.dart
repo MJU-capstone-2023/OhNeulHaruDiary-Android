@@ -3,10 +3,10 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:fluttertoast/fluttertoast.dart';
-import 'package:sketch_day/screens/main/main_page.dart';
 
 import '../../../../utils/authService.dart';
 import '../../../../widgets/show_loading_dialog.dart';
+import '../view_diary_page.dart';
 
 class WriteDiaryPage extends StatefulWidget {
   @override
@@ -50,12 +50,14 @@ class _WritePageState extends State<WriteDiaryPage> {
     );
     Navigator.pop(context);
 
+    final jsonDecode = json.decode(utf8.decode(response.bodyBytes));
+    print(jsonDecode);
     if (response.statusCode == 200) {
-      Fluttertoast.showToast(msg: "일기를 작성하였습니다.");
-      Navigator.pushAndRemoveUntil(
+      Navigator.pushReplacement(
         context,
-        MaterialPageRoute(builder: (context) => MainPage()),
-        (route) => route == null,
+        MaterialPageRoute(
+          builder: (context) => ViewDiaryPage(diaryId: jsonDecode['diary_id']),
+        ),
       );
     } else {
       Fluttertoast.showToast(msg: "일기 작성에 실패하였습니다.");
