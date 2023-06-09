@@ -1,5 +1,8 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:fluttertoast/fluttertoast.dart';
 import 'package:sketch_day/screens/main/main_page.dart';
 
 import '../../../../utils/authService.dart';
@@ -48,14 +51,16 @@ class _WritePageState extends State<WriteDiaryPage> {
     Navigator.pop(context);
 
     if (response.statusCode == 200) {
+      Fluttertoast.showToast(msg: "일기를 작성하였습니다.");
       Navigator.pushAndRemoveUntil(
         context,
         MaterialPageRoute(builder: (context) => MainPage()),
         (route) => route == null,
       );
     } else {
+      Fluttertoast.showToast(msg: "일기 작성에 실패하였습니다.");
       print('${response.statusCode}, ${response.body}');
-      // print(utf8.decode(response.bodyBytes));
+      print(utf8.decode(response.bodyBytes));
       throw Exception('일기 저장에 실패했습니다.');
     }
   }

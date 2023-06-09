@@ -24,7 +24,26 @@ class _ViewDiaryPageState extends State<ViewDiaryPage> {
   String _imageURL = '';
 
   Future<void> _fetchImageURL() async {
-    showLoadingDialog(context);
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (BuildContext context) {
+        return Dialog(
+          child: Container(
+            height: 100,
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                CircularProgressIndicator(),
+                SizedBox(width: 20),
+                Text("Loading"),
+              ],
+            ),
+          ),
+        );
+      },
+    );
 
     final url =
         '${dotenv.env['BASE_URL']}/diary/createImg?id=${widget.diaryId}';
@@ -51,11 +70,9 @@ class _ViewDiaryPageState extends State<ViewDiaryPage> {
   }
 
   Future<Map<String, dynamic>> _getDiaryById() async {
-    showLoadingDialog(context);
     final url = '${dotenv.env['BASE_URL']}/diary/${widget.diaryId}';
     final accessToken = await _authService.readAccessToken() ?? '';
     final response = await _authService.get(url, accessToken);
-    Navigator.pop(context);
 
     if (response.statusCode == 200) {
       final responseJson = jsonDecode(utf8.decode(response.bodyBytes));
@@ -85,9 +102,9 @@ class _ViewDiaryPageState extends State<ViewDiaryPage> {
         MaterialPageRoute(builder: (context) => MainPage()),
         (route) => route == null,
       );
-      Fluttertoast.showToast(msg: "다이어리 삭제 완료");
+      Fluttertoast.showToast(msg: "삭제하였습니다.");
     } else {
-      Fluttertoast.showToast(msg: "다이어리 삭제에 실패했습니다.");
+      Fluttertoast.showToast(msg: "일기 삭제에 실패했습니다.");
       throw Exception('다이어리 삭제에 실패했습니다.');
     }
   }
