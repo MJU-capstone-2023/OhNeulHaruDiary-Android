@@ -3,6 +3,7 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:sketch_day/screens/main/main_page.dart';
 
 import '../../../../utils/authService.dart';
+import '../../../../widgets/show_loading_dialog.dart';
 
 class WriteDiaryPage extends StatefulWidget {
   @override
@@ -30,6 +31,7 @@ class _WritePageState extends State<WriteDiaryPage> {
   }
 
   Future<void> saveDiary() async {
+    showLoadingDialog(context);
     final content = _textEditingController.text; // 일기 내용
     final url = '${dotenv.env['BASE_URL']}/diary/create';
     final accessToken = await _authService.readAccessToken() ?? '';
@@ -43,6 +45,7 @@ class _WritePageState extends State<WriteDiaryPage> {
         'wea_id': "1"
       },
     );
+    Navigator.pop(context);
 
     if (response.statusCode == 200) {
       Navigator.pushAndRemoveUntil(

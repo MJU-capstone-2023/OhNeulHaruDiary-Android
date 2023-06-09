@@ -6,6 +6,7 @@ import 'package:fluttertoast/fluttertoast.dart';
 import 'package:sketch_day/screens/main/create_post/update_diary_page.dart';
 
 import '../../../utils/authService.dart';
+import '../../../widgets/show_loading_dialog.dart';
 import '../main_page.dart';
 
 class ViewDiaryPage extends StatefulWidget {
@@ -23,26 +24,7 @@ class _ViewDiaryPageState extends State<ViewDiaryPage> {
   String _imageURL = '';
 
   Future<void> _fetchImageURL() async {
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (BuildContext context) {
-        return Dialog(
-          child: Container(
-            height: 100,
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: [
-                CircularProgressIndicator(),
-                SizedBox(width: 20),
-                Text("Loading"),
-              ],
-            ),
-          ),
-        );
-      },
-    );
+    showLoadingDialog(context);
 
     final url =
         '${dotenv.env['BASE_URL']}/diary/createImg?id=${widget.diaryId}';
@@ -69,9 +51,11 @@ class _ViewDiaryPageState extends State<ViewDiaryPage> {
   }
 
   Future<Map<String, dynamic>> _getDiaryById() async {
+    showLoadingDialog(context);
     final url = '${dotenv.env['BASE_URL']}/diary/${widget.diaryId}';
     final accessToken = await _authService.readAccessToken() ?? '';
     final response = await _authService.get(url, accessToken);
+    Navigator.pop(context);
 
     if (response.statusCode == 200) {
       final responseJson = jsonDecode(utf8.decode(response.bodyBytes));
@@ -89,9 +73,11 @@ class _ViewDiaryPageState extends State<ViewDiaryPage> {
   }
 
   Future<void> _removeDiaryById() async {
+    showLoadingDialog(context);
     final url = '${dotenv.env['BASE_URL']}/diary/del?id=${widget.diaryId}';
     final accessToken = await _authService.readAccessToken() ?? '';
     final response = await _authService.delete(url, accessToken);
+    Navigator.pop(context);
 
     if (response.statusCode == 200) {
       Navigator.pushAndRemoveUntil(
@@ -99,6 +85,7 @@ class _ViewDiaryPageState extends State<ViewDiaryPage> {
         MaterialPageRoute(builder: (context) => MainPage()),
         (route) => route == null,
       );
+      Fluttertoast.showToast(msg: "다이어리 삭제 완료");
     } else {
       Fluttertoast.showToast(msg: "다이어리 삭제에 실패했습니다.");
       throw Exception('다이어리 삭제에 실패했습니다.');
